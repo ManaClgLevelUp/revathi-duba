@@ -45,6 +45,19 @@ const Navigation = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // Prevent scrolling when menu is open
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isOpen]);
+
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -74,7 +87,7 @@ const Navigation = () => {
             onClick={() => setIsOpen(!isOpen)}
             aria-label="Toggle menu"
           >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
+            <Menu size={24} />
           </button>
 
           <nav className="hidden md:flex items-center space-x-8">
@@ -93,6 +106,15 @@ const Navigation = () => {
 
         {isOpen && (
           <div className="md:hidden fixed inset-0 z-50 bg-background pt-20 px-4">
+            <div className="absolute top-4 right-4 luxury-container flex justify-end">
+              <button
+                className="flex items-center text-navy-900 p-2"
+                onClick={() => setIsOpen(false)}
+                aria-label="Close menu"
+              >
+                <X size={24} />
+              </button>
+            </div>
             <nav className="flex flex-col space-y-6 items-center">
               {navigationItems.map((item) => (
                 <a
