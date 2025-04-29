@@ -58,7 +58,7 @@ const Hero = () => {
           <div className="relative w-64 h-64 md:w-80 md:h-96 lg:w-96 lg:h-[30rem] animate-fade-in">
             <div className="absolute inset-0 rounded-md bg-gradient-to-br from-gold-200/30 to-gold-500/20"></div>
             <img 
-              src="https://media.licdn.com/dms/image/v2/D4E03AQGqR6Yq62JZGA/profile-displayphoto-shrink_400_400/B4EZZr_Ou1HEAo-/0/1745568463589?e=1751500800&v=beta&t=a1B9HNXMKjkoJnxaYXXzVQcJaS6Ur0JJj8W5BQjP-II" 
+              src="src/images/profile.jpg" 
               alt="Dr. Revathi Duba" 
               className="w-full h-full object-cover rounded-md shadow-lg relative z-10"
             />
