@@ -1,4 +1,3 @@
-
 import React from 'react';
 import Navigation from '@/components/Navigation';
 import Hero from '@/components/Hero';
@@ -7,6 +6,7 @@ import Education from '@/components/Education';
 import Research from '@/components/Research';
 import Skills from '@/components/Skills';
 import Leadership from '@/components/Leadership';
+import Certifications from '@/components/Certifications';
 import Contact from '@/components/Contact';
 import Footer from '@/components/Footer';
 
@@ -22,6 +22,7 @@ const Index = () => {
         <Research />
         <Skills />
         <Leadership />
+        <Certifications />
         <Contact />
       </main>
       
