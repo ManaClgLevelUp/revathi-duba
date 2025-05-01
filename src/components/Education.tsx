@@ -321,9 +321,9 @@ const Education = () => {
                   className={`relative mb-12 md:mb-16 flex 
                     ${!isMobile ? (isEven ? 'md:justify-start' : 'md:justify-end') : 'justify-start'}`}
                 >
-                  {/* Timeline node - Responsive positioning */}
+                  {/* Timeline node - Responsive positioning - FIX for mobile centering */}
                   <div className={`absolute z-30 flex items-center justify-center top-5
-                    ${isMobile ? 'left-5 sm:left-8' : 'left-1/2 transform -translate-x-1/2'}`}
+                    ${isMobile ? 'left-5 sm:left-8 -translate-x-[3px]' : 'left-1/2 transform -translate-x-1/2'}`}
                   >
                     <div className={`
                       w-6 h-6 rounded-full ${isRevealed[index] ? education.color : 'bg-gray-300'} 
@@ -348,10 +348,10 @@ const Education = () => {
                     `}
                   >
                     <div className="relative">
-                      {/* Year marker with proper positioning */}
+                      {/* Year marker with improved padding for better text coverage */}
                       <div 
                         className={`
-                          absolute text-sm font-bold px-3 py-1.5 rounded-full shadow-sm whitespace-nowrap
+                          absolute text-sm font-bold px-4 py-2 rounded-full shadow-sm whitespace-nowrap
                           ${isMobile 
                             ? 'top-0 right-2 -translate-y-1/2' 
                             : `top-4 ${isEven ? 'right-0 md:left-full md:translate-x-6' : 'left-0 md:right-full md:-translate-x-6'}`}
