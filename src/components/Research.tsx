@@ -455,23 +455,23 @@ const Research = () => {
                       )}
                     </div>
                     
-                    {/* Action buttons */}
-                    <div className={`mt-4 flex gap-3 transition-all duration-300 ${
+                    {/* Action buttons - with responsive layout */}
+                    <div className={`mt-4 flex flex-wrap gap-2 transition-all duration-300 ${
                       activePublication === pub.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
                     }`}>
-                      <button className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-50 text-indigo-700 text-xs rounded hover:bg-indigo-100 transition-colors">
+                      <button className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 text-xs rounded hover:bg-indigo-100 transition-colors">
                         <ExternalLink size={14} />
-                        <span>View Publication</span>
+                        <span className="sm:inline">View</span>
                       </button>
                       
-                      <button className="inline-flex items-center gap-1 px-3 py-1.5 bg-emerald-50 text-emerald-700 text-xs rounded hover:bg-emerald-100 transition-colors">
+                      <button className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 text-emerald-700 text-xs rounded hover:bg-emerald-100 transition-colors">
                         <Download size={14} />
-                        <span>Download PDF</span>
+                        <span className="sm:inline">PDF</span>
                       </button>
                       
-                      <button className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-50 text-amber-700 text-xs rounded hover:bg-amber-100 transition-colors">
+                      <button className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 text-amber-700 text-xs rounded hover:bg-amber-100 transition-colors">
                         <FileText size={14} />
-                        <span>Cite</span>
+                        <span className="sm:inline">Cite</span>
                       </button>
                     </div>
                   </div>
