@@ -1,28 +1,70 @@
-
 import React from 'react';
 
 const Education = () => {
   const educationHistory = [
     {
-      degree: "Ph.D in Computer Science",
-      institution: "Indian Institute of Technology",
-      years: "2012 - 2016",
-      description: "Specialized in Artificial Intelligence and Machine Learning algorithms",
-      logo: "https://upload.wikimedia.org/wikipedia/en/1/1c/IIT_Kanpur_Logo.svg"
+      degree: 'Ph.D.: Electrical Engineering',
+      institution: 'Lincoln University College',
+      location: 'Malaysia',
+      years: '2025',
+      description: '',
+      logo: '/src/images/lincoln-logo.png'
     },
     {
-      degree: "M.Tech in Data Science",
-      institution: "University of Delhi",
-      years: "2010 - 2012",
-      description: "Focused on statistical methods and big data analytics",
-      logo: "https://upload.wikimedia.org/wikipedia/en/4/4c/University_of_Delhi.svg"
+      degree: 'Master of Technology: Artificial Intelligence and Data Science',
+      institution: 'Jawaharlal Nehru Technological University',
+      location: 'Kakinada, India',
+      years: '2024',
+      description: 'First class with Distinction. Final Grade: 83%',
+      logo: '/src/images/jntu-logo.png'
     },
     {
-      degree: "B.Tech in Computer Engineering",
-      institution: "Anna University",
-      years: "2006 - 2010",
-      description: "Foundation in computer systems and programming",
-      logo: "https://upload.wikimedia.org/wikipedia/en/a/a2/Anna_University_Logo.svg"
+      degree: 'One Year Certification Courses: Artificial Intelligence and Machine Learning',
+      institution: 'Indian Institute of Technology',
+      location: 'Kanpur, India',
+      years: '2023',
+      description: '',
+      logo: '/src/images/iit-logo.png'
+    },
+    {
+      degree: 'MBA: Marketing Management and Human Resource Management',
+      institution: 'Adikavi Nannayya University',
+      location: 'Rajahmundry, India',
+      years: '2019',
+      description: 'First Class with Distinction. Final Grade: CGPA 7.93',
+      logo: '/src/images/anu-logo.png'
+    },
+    {
+      degree: 'Post-Graduation Diploma in Energy Management',
+      institution: 'MIT',
+      location: 'Pune, India',
+      years: '2019',
+      description: 'Final Grade: A',
+      logo: '/src/images/mit-logo.png'
+    },
+    {
+      degree: 'Master of Technology: Power Systems and High Voltage Engineering',
+      institution: 'Jawaharlal Technological University Kakinada',
+      location: 'Kakinada, India',
+      years: '2011',
+      description: 'First class with Distinction. Final Grade: 83%. Recipient of University Topper',
+      logo: '/src/images/jntu-logo.png'
+    },
+    {
+      degree: 'Bachelor of Technology: Electrical and Electronics Engineering',
+      institution: 'Jawaharlal Technological University Hyderabad',
+      location: 'Hyderabad, India',
+      years: '2007',
+      description: 'First Class with Distinction. Final Grade: 76%',
+      logo: '/src/images/jntuh-logo.png'
+    },
+    {
+      degree: 'Board of Intermediate Studies: MPC',
+      institution: 'Pragati Junior College',
+      location: 'Kakinada, India',
+      years: '2003',
+      description: 'Final Grade: 80.1%',
+      logo: '/src/images/pragati-logo.png'
     }
   ];
 

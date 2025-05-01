@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { FileText } from 'lucide-react';
 
@@ -24,7 +23,7 @@ const About = () => {
     { label: 'Years Experience', value: '10+' },
     { label: 'Publications', value: '20+' },
     { label: 'Awards', value: '8+' },
-    { label: 'Students Mentored', value: '50+' }
+    { label: 'Students Mentored', value: '1000+' }
   ];
 
   return (
