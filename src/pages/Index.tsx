@@ -1,5 +1,4 @@
 import React from 'react';
-import Navigation from '@/components/Navigation';
 import Hero from '@/components/Hero';
 import About from '@/components/About';
 import Education from '@/components/Education';
@@ -8,13 +7,10 @@ import Skills from '@/components/Skills';
 import Leadership from '@/components/Leadership';
 import Certifications from '@/components/Certifications';
 import Contact from '@/components/Contact';
-import Footer from '@/components/Footer';
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <Navigation />
-      
       <main>
         <Hero />
         <About />
@@ -25,8 +21,6 @@ const Index = () => {
         <Certifications />
         <Contact />
       </main>
-      
-      <Footer />
     </div>
   );
 };

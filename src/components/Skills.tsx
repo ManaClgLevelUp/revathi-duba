@@ -177,7 +177,7 @@ const Skills = () => {
                 <div 
                   key={index} 
                   className="group relative p-5 bg-white bg-opacity-10 backdrop-blur-sm rounded-xl border border-white/20 
-                         transition-all duration-500 hover:shadow-xl overflow-hidden"
+                         transition-all duration-500 shadow-xl overflow-hidden"
                   style={{ 
                     opacity: isVisible ? 1 : 0, 
                     transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
@@ -187,35 +187,33 @@ const Skills = () => {
                   onMouseEnter={() => setHoveredAcademic(index)}
                   onMouseLeave={() => setHoveredAcademic(null)}
                 >
-                  {/* Animated background gradient */}
+                  {/* Background gradient visible by default */}
                   <div 
-                    className="absolute inset-0 bg-gradient-to-br from-transparent to-gold-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"
+                    className="absolute inset-0 bg-gradient-to-br from-transparent to-gold-500/10 opacity-100 transition-opacity duration-700 pointer-events-none"
                   ></div>
                   
-                  {/* Animated corner accent */}
-                  <div className="absolute -top-10 -right-10 w-20 h-20 bg-gradient-to-br from-gold-400/0 to-gold-400/30 rounded-full transform translate-x-full -translate-y-full group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-700 pointer-events-none"></div>
+                  {/* Corner accent visible by default */}
+                  <div className="absolute -top-10 -right-10 w-20 h-20 bg-gradient-to-br from-gold-400/0 to-gold-400/30 rounded-full transform translate-x-0 translate-y-0 transition-all duration-700 pointer-events-none"></div>
                   
                   <div className="flex flex-col h-full relative z-10">
                     <div className="flex items-center mb-2">
+                      {/* Icon styled by default with hover effects */}
                       <div 
-                        className="mr-3 p-2 rounded-md bg-white/10 text-gold-500 transform transition-all duration-500 group-hover:scale-110 group-hover:rotate-3 group-hover:bg-gold-500/20"
+                        className="mr-3 p-2 rounded-md bg-gold-500/20 text-gold-500 transform scale-110 rotate-3 transition-all duration-500 group-hover:scale-125 group-hover:rotate-6"
                       >
                         {skill.icon}
                       </div>
                       <h4 className="font-medium text-navy-800">{skill.name}</h4>
                     </div>
                     
-                    <p 
-                      className={`text-navy-500 text-sm mt-2 transition-all duration-500 ${
-                        hoveredAcademic === index ? 'opacity-100 max-h-20' : 'opacity-0 max-h-0'
-                      } overflow-hidden`}
-                    >
+                    {/* Description visible by default */}
+                    <p className="text-navy-500 text-sm mt-2 transition-all duration-500">
                       {skill.description}
                     </p>
                     
-                    {/* Animated border bottom */}
+                    {/* Bottom border visible by default */}
                     <div className="mt-auto pt-2">
-                      <div className="w-0 group-hover:w-full h-px bg-gradient-to-r from-gold-400 to-transparent transition-all duration-700"></div>
+                      <div className="w-full h-px bg-gradient-to-r from-gold-400 to-transparent transition-all duration-700"></div>
                     </div>
                   </div>
                 </div>

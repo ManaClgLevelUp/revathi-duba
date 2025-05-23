@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Book, FileText, Calendar, Award, Search, Download, ExternalLink, Users, Filter, X, ChevronDown } from 'lucide-react';
+import { Book, FileText, Calendar, Award, Search, Download, ExternalLink, Users, Filter, X, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
 
 const Research = () => {
   const [activeCategory, setActiveCategory] = useState('all');
@@ -8,8 +8,10 @@ const Research = () => {
   const [selectedYear, setSelectedYear] = useState<string>('all');
   const [activePublication, setActivePublication] = useState<number | null>(null);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [publicationsToShow, setPublicationsToShow] = useState(3);
   
   const searchRef = useRef<HTMLInputElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
 
   const publications = [
     {
@@ -212,11 +214,28 @@ const Research = () => {
     setIsSearchFocused(false);
   };
 
+  const loadMorePublications = () => {
+    setPublicationsToShow(prev => prev + 3);
+  };
+  
+  const showLessPublications = () => {
+    setPublicationsToShow(3);
+  };
+  
+  // When filters change, reset the number of shown publications
+  useEffect(() => {
+    setPublicationsToShow(3);
+  }, [activeCategory, selectedYear, searchQuery]);
+
   useEffect(() => {
     if (isSearchFocused && searchRef.current) {
       searchRef.current.focus();
     }
   }, [isSearchFocused]);
+
+  // Get only the publications we want to display
+  const visiblePublications = filteredPublications.slice(0, publicationsToShow);
+  const hasMorePublications = filteredPublications.length > publicationsToShow;
 
   // Animation classes for publications when they appear
   const getAnimationClass = (index: number) => {
@@ -369,7 +388,7 @@ const Research = () => {
         {/* Results Counter */}
         <div className="mb-8 flex justify-between items-center">
           <p className="text-navy-600">
-            Showing <span className="font-medium text-navy-900">{filteredPublications.length}</span> of <span className="font-medium text-navy-900">{publications.length}</span> publications
+            Showing <span className="font-medium text-navy-900">{visiblePublications.length}</span> of <span className="font-medium text-navy-900">{filteredPublications.length}</span> publications
           </p>
           
           <div className="text-navy-500 text-sm">
@@ -401,7 +420,7 @@ const Research = () => {
               </button>
             </div>
           ) : (
-            filteredPublications.map((pub, index) => (
+            visiblePublications.map((pub, index) => (
               <div 
                 key={pub.id} 
                 className={`luxury-card group bg-white hover:shadow-lg hover:shadow-indigo-100/40 border-l-4 ${
@@ -478,6 +497,29 @@ const Research = () => {
                 </div>
               </div>
             ))
+          )}
+        </div>
+        
+        {/* Load More/Less Buttons */}
+        <div ref={loadMoreRef} className="mt-8 text-center animate-fade-in flex justify-center gap-4">
+          {hasMorePublications && (
+            <button 
+              onClick={loadMorePublications}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-indigo-200 text-navy-800 rounded-md hover:bg-indigo-50 hover:border-indigo-300 transition-all group shadow-sm"
+            >
+              <span>Show More</span>
+              <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            </button>
+          )}
+          
+          {publicationsToShow > 3 && (
+            <button 
+              onClick={showLessPublications}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-indigo-200 text-navy-800 rounded-md hover:bg-indigo-50 hover:border-indigo-300 transition-all group shadow-sm"
+            >
+              <span>Show Less</span>
+              <ChevronUp size={16} className="group-hover:-translate-y-1 transition-transform" />
+            </button>
           )}
         </div>
         

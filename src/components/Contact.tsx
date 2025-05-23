@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Mail, Linkedin, BookOpen, Link as LinkIcon, Phone, MessageSquare, Send, ArrowRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { saveContactForm } from '../utils/firebase';
 
 const Contact = () => {
   const { toast } = useToast();
@@ -30,12 +31,14 @@ const Contact = () => {
     setActiveField('');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    setTimeout(() => {
+    try {
+      // Save form data to Firebase
+      await saveContactForm(formData);
+      
       toast({
         title: "Message Sent",
         description: "Thank you for your message. Dr. Duba will get back to you soon.",
@@ -47,8 +50,15 @@ const Contact = () => {
         subject: '',
         message: ''
       });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "There was an error sending your message. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
       setIsSubmitting(false);
-    }, 1500);
+    }
   };
 
   const contactInfo = [
@@ -104,6 +114,7 @@ const Contact = () => {
         <div className="absolute -bottom-40 -right-40 w-80 h-80 rounded-full bg-gradient-to-r from-blue-400 to-cyan-600 blur-3xl"></div>
       </div>
       
+      {/* Main content container with improved responsive behavior */}
       <div className="luxury-container relative z-10">
         <div className="mb-16 text-center">
           <h2 className="text-4xl md:text-5xl font-playfair font-medium mb-4">Get In Touch</h2>
