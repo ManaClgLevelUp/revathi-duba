@@ -83,11 +83,44 @@ const Hero = () => {
     return { transform };
   };
 
-  // TypeWriter effect for headlines
+  // Improved TypeWriter effect for headlines that handles scroll properly
   const TypedText = ({ text, className, delay = 0 }: any) => {
     const [displayText, setDisplayText] = useState('');
+    const [isTypingComplete, setIsTypingComplete] = useState(false);
+    const [isVisible, setIsVisible] = useState(false);
+    const typedTextRef = useRef<HTMLSpanElement>(null);
     
+    // Use IntersectionObserver to detect when element is in viewport
     useEffect(() => {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries[0].isIntersecting) {
+            setIsVisible(true);
+          } else if (isTypingComplete) {
+            // Only reset if we've completed typing once and left viewport
+            setIsVisible(false);
+            setDisplayText('');
+            setIsTypingComplete(false);
+          }
+        },
+        { threshold: 0.3 }
+      );
+      
+      if (typedTextRef.current) {
+        observer.observe(typedTextRef.current);
+      }
+      
+      return () => {
+        if (typedTextRef.current) {
+          observer.unobserve(typedTextRef.current);
+        }
+      };
+    }, [isTypingComplete]);
+    
+    // Handle typing animation
+    useEffect(() => {
+      if (!isVisible) return;
+      
       const timeout = setTimeout(() => {
         let currentIndex = 0;
         const typeInterval = setInterval(() => {
@@ -95,17 +128,18 @@ const Hero = () => {
             setDisplayText(text.substring(0, currentIndex));
             currentIndex++;
           } else {
+            setIsTypingComplete(true);
             clearInterval(typeInterval);
           }
-        }, 50);
+        }, 40); // Slightly faster typing for better mobile experience
         
         return () => clearInterval(typeInterval);
       }, delay);
       
       return () => clearTimeout(timeout);
-    }, [text, delay]);
+    }, [text, delay, isVisible]);
     
-    return <span className={className}>{displayText}</span>;
+    return <span ref={typedTextRef} className={className}>{displayText}</span>;
   };
 
   return (
@@ -148,7 +182,7 @@ const Hero = () => {
             <span className="relative w-2 h-2 rounded-full bg-gold-500 mr-2 animate-pulse-slow">
               <span className="absolute inset-0 rounded-full bg-gold-500 animate-ping-slow opacity-60"></span>
             </span>
-            <TypedText text="Principal & Academic Director" className="tracking-wide" delay={800} />
+            <TypedText text="Principal & Academic Director" className="tracking-wide" delay={300} />
           </div>
           
           {/* Fixed main headline - removed white shading issue */}

@@ -9,6 +9,7 @@ const Contact = () => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',  // Added phone field
     subject: '',
     message: ''
   });
@@ -23,13 +24,48 @@ const Contact = () => {
     }));
   };
 
+  // Updated to handle autofill - check if field has value after animation frame
   const handleFocus = (fieldName: string) => {
     setActiveField(fieldName);
+    
+    // Check for autofilled values after a small delay
+    requestAnimationFrame(() => {
+      const element = document.getElementById(fieldName);
+      if (element && (element as HTMLInputElement).value) {
+        setFormData(prev => ({
+          ...prev,
+          [fieldName]: (element as HTMLInputElement).value
+        }));
+      }
+    });
   };
 
   const handleBlur = () => {
     setActiveField('');
   };
+
+  // Added function to detect autofill
+  const checkForAutofill = () => {
+    // Use animation frame to ensure DOM is updated
+    requestAnimationFrame(() => {
+      ['name', 'email', 'phone', 'subject', 'message'].forEach(field => {
+        const element = document.getElementById(field);
+        if (element && (element as HTMLInputElement).value) {
+          setFormData(prev => ({
+            ...prev,
+            [field]: (element as HTMLInputElement).value
+          }));
+        }
+      });
+    });
+  };
+
+  // Add effect to detect autofill when component mounts
+  React.useEffect(() => {
+    // Check for autofill after a short delay to allow browser to fill fields
+    const timer = setTimeout(checkForAutofill, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,12 +80,40 @@ const Contact = () => {
         description: "Thank you for your message. Dr. Duba will get back to you soon.",
       });
       
+      // Create professionally formatted WhatsApp message with form data
+      const formattedDate = new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      const whatsappMessage = encodeURIComponent(
+        `Date: ${formattedDate}\n` +
+        `Dear Dr. Revathi Duba,\n\n` +
+        `I am ${formData.name}, writing to inquire about ${formData.subject}.\n\n` +
+        `*Details of Inquiry:*\n${formData.message}\n` +
+        `I would appreciate the opportunity to discuss this matter further at your convenience.\n\n` +
+        `*Contact Information:*\n` +
+        `Email: ${formData.email}\n` +
+        `Phone: ${formData.phone}\n` +
+        `Thank you for your time and consideration.\n` +
+        `Sincerely,\n${formData.name}`
+      );
+      
+      // Reset form data
       setFormData({
         name: '',
         email: '',
+        phone: '',
         subject: '',
         message: ''
       });
+      
+      // Redirect to WhatsApp after a short delay
+      setTimeout(() => {
+        window.open(`https://wa.me/918099794356?text=${whatsappMessage}`, '_blank');
+      }, 1000);
+      
     } catch (error) {
       toast({
         title: "Error",
@@ -177,6 +241,7 @@ const Contact = () => {
               
               <form onSubmit={handleSubmit} className="relative">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                  {/* Name field */}
                   <div className="relative group">
                     <label 
                       htmlFor="name" 
@@ -198,10 +263,12 @@ const Contact = () => {
                       onFocus={() => handleFocus('name')}
                       onBlur={handleBlur}
                       required
+                      autoComplete="name"
                       className="w-full p-3 bg-navy-700/50 border border-navy-600 rounded text-white placeholder:text-navy-400 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500/30 transition-all"
                     />
                   </div>
                   
+                  {/* Email field */}
                   <div className="relative group">
                     <label 
                       htmlFor="email" 
@@ -223,11 +290,39 @@ const Contact = () => {
                       onFocus={() => handleFocus('email')}
                       onBlur={handleBlur}
                       required
+                      autoComplete="email"
                       className="w-full p-3 bg-navy-700/50 border border-navy-600 rounded text-white placeholder:text-navy-400 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500/30 transition-all"
                     />
                   </div>
                 </div>
                 
+                {/* Add phone field */}
+                <div className="mb-6 relative group">
+                  <label 
+                    htmlFor="phone" 
+                    className={cn(
+                      "absolute left-3 transition-all duration-200 pointer-events-none",
+                      activeField === 'phone' || formData.phone ? 
+                        "-top-2 text-xs bg-navy-800 px-1 text-gold-400" : 
+                        "top-3 text-navy-400"
+                    )}
+                  >
+                    Phone Number
+                  </label>
+                  <input
+                    type="tel"
+                    id="phone"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    onFocus={() => handleFocus('phone')}
+                    onBlur={handleBlur}
+                    autoComplete="tel"
+                    className="w-full p-3 bg-navy-700/50 border border-navy-600 rounded text-white placeholder:text-navy-400 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500/30 transition-all"
+                  />
+                </div>
+                
+                {/* Subject field */}
                 <div className="mb-6 relative group">
                   <label 
                     htmlFor="subject" 
@@ -249,10 +344,12 @@ const Contact = () => {
                     onFocus={() => handleFocus('subject')}
                     onBlur={handleBlur}
                     required
+                    autoComplete="off"
                     className="w-full p-3 bg-navy-700/50 border border-navy-600 rounded text-white placeholder:text-navy-400 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500/30 transition-all"
                   />
                 </div>
                 
+                {/* Message field */}
                 <div className="mb-8 relative group">
                   <label 
                     htmlFor="message" 
@@ -274,6 +371,7 @@ const Contact = () => {
                     onBlur={handleBlur}
                     required
                     rows={5}
+                    autoComplete="off"
                     className="w-full p-3 bg-navy-700/50 border border-navy-600 rounded text-white placeholder:text-navy-400 focus:outline-none focus:border-gold-500 focus:ring-1 focus:ring-gold-500/30 transition-all resize-none"
                   ></textarea>
                 </div>

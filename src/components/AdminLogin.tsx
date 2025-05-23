@@ -1,7 +1,10 @@
+
 import React, { useState } from 'react';
 import { loginAdmin } from '../utils/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Mail, Lock, LogIn } from 'lucide-react';
+// Import the new admin utilities
+import { generateAdminWhatsAppResponse, formatPhoneNumber } from '../utils/adminUtils';
 
 const AdminLogin = () => {
   const [email, setEmail] = useState('');
