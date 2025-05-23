@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -132,7 +131,20 @@ export default {
 						opacity: '0.95',
 						transform: 'scale(1.01)'
 					}
-				}
+				},
+				'shimmer': {
+					'0%': { backgroundPosition: '-100% 0' },
+					'100%': { backgroundPosition: '200% 0' }
+				},
+				'float-particle': {
+					'0%, 100%': { transform: 'translateY(0) rotate(0deg)', opacity: '0.1' },
+					'50%': { transform: 'translateY(-20px) rotate(10deg)', opacity: '0.3' },
+					'75%': { transform: 'translateY(-10px) rotate(-5deg)', opacity: '0.2' }
+				},
+				'pulse-glow': {
+					'0%, 100%': { opacity: '0.5', boxShadow: '0 0 15px rgba(246, 204, 117, 0.3)' },
+					'50%': { opacity: '0.8', boxShadow: '0 0 30px rgba(246, 204, 117, 0.6)' }
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
@@ -140,6 +152,9 @@ export default {
 				'fade-in': 'fade-in 0.8s ease-out forwards',
 				'fade-in-up': 'fade-in-up 0.8s ease-out forwards',
 				'gentle-pulse': 'gentle-pulse 8s ease-in-out infinite',
+				'shimmer': 'shimmer 4s linear infinite',
+				'float-particle': 'float-particle 10s ease-in-out infinite',
+				'pulse-glow': 'pulse-glow 3s ease-in-out infinite',
 			}
 		}
 	},

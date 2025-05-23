@@ -83,63 +83,80 @@ const Hero = () => {
     return { transform };
   };
 
-  // Improved TypeWriter effect for headlines that handles scroll properly
+  // Simplified TypeWriter effect that only animates on initial load and when clicked
   const TypedText = ({ text, className, delay = 0 }: any) => {
     const [displayText, setDisplayText] = useState('');
     const [isTypingComplete, setIsTypingComplete] = useState(false);
-    const [isVisible, setIsVisible] = useState(false);
+    const [isVisible, setIsVisible] = useState(true);
     const typedTextRef = useRef<HTMLSpanElement>(null);
+    const typeIntervalRef = useRef<any>(null);
     
-    // Use IntersectionObserver to detect when element is in viewport
+    // Initial typing animation on component mount - only runs once
     useEffect(() => {
-      const observer = new IntersectionObserver(
-        (entries) => {
-          if (entries[0].isIntersecting) {
-            setIsVisible(true);
-          } else if (isTypingComplete) {
-            // Only reset if we've completed typing once and left viewport
-            setIsVisible(false);
-            setDisplayText('');
-            setIsTypingComplete(false);
-          }
-        },
-        { threshold: 0.3 }
-      );
-      
-      if (typedTextRef.current) {
-        observer.observe(typedTextRef.current);
-      }
-      
-      return () => {
-        if (typedTextRef.current) {
-          observer.unobserve(typedTextRef.current);
-        }
-      };
-    }, [isTypingComplete]);
-    
-    // Handle typing animation
-    useEffect(() => {
-      if (!isVisible) return;
-      
-      const timeout = setTimeout(() => {
-        let currentIndex = 0;
-        const typeInterval = setInterval(() => {
+      let currentIndex = 0;
+      const initialTimeout = setTimeout(() => {
+        typeIntervalRef.current = setInterval(() => {
           if (currentIndex <= text.length) {
             setDisplayText(text.substring(0, currentIndex));
             currentIndex++;
           } else {
             setIsTypingComplete(true);
-            clearInterval(typeInterval);
+            clearInterval(typeIntervalRef.current);
           }
-        }, 40); // Slightly faster typing for better mobile experience
-        
-        return () => clearInterval(typeInterval);
+        }, 40);
       }, delay);
       
-      return () => clearTimeout(timeout);
-    }, [text, delay, isVisible]);
+      return () => {
+        clearTimeout(initialTimeout);
+        clearInterval(typeIntervalRef.current);
+      };
+    }, []); // Empty dependency array ensures this only runs once
     
-    return <span ref={typedTextRef} className={className}>{displayText}</span>;
+    // Handle toggle on click
+    const handleToggle = () => {
+      if (!isTypingComplete) return;
+      
+      if (isVisible) {
+        // Erase animation
+        let eraseIndex = displayText.length;
+        clearInterval(typeIntervalRef.current);
+        
+        typeIntervalRef.current = setInterval(() => {
+          if (eraseIndex > 0) {
+            eraseIndex--;
+            setDisplayText(text.substring(0, eraseIndex));
+          } else {
+            setIsVisible(false);
+            clearInterval(typeIntervalRef.current);
+          }
+        }, 20);
+      } else {
+        // Type animation
+        let typeIndex = 0;
+        setIsVisible(true);
+        clearInterval(typeIntervalRef.current);
+        
+        typeIntervalRef.current = setInterval(() => {
+          if (typeIndex <= text.length) {
+            setDisplayText(text.substring(0, typeIndex));
+            typeIndex++;
+          } else {
+            clearInterval(typeIntervalRef.current);
+          }
+        }, 40);
+      }
+    };
+    
+    return (
+      <span 
+        ref={typedTextRef}
+        className={`${className} ${isTypingComplete ? 'cursor-pointer hover:text-navy-900 transition-colors' : ''}`}
+        onClick={handleToggle}
+        title={isTypingComplete ? "Click to toggle" : ""}
+      >
+        {displayText || (isTypingComplete && !isVisible ? '\u00A0' : '')}
+      </span>
+    );
   };
 
   return (

@@ -159,14 +159,29 @@ const Footer: React.FC = () => {
           <p>&copy; {currentYear} Dr. Revathi Duba. All rights reserved.</p>
           <p className="mt-2 text-sm">
             Designed & Developed By{" "}
-            <a 
-              href="https://thedreamteamservices.com/" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-gold-300 hover:text-gold-200 transition-colors font-medium"
-            >
-              DREAM TEAM SERVICES
-            </a>
+            <span className="sm:inline hidden">
+              <a 
+                href="https://thedreamteamservices.com/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-gold-300 hover:text-gold-200 transition-colors font-medium"
+              >
+                {<span className="text-gold-300">DREAM TEAM SERVICES</span>}
+              </a>
+            </span>
+            {/* Mobile attribution with reduced spacing */}
+            <span className="sm:hidden inline">
+              <span className="inline-block mt-0.5"> {/* Smaller gap instead of <br /> */}
+                <a 
+                  href="https://thedreamteamservices.com/" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-gold-300 hover:text-gold-200 transition-colors font-medium"
+                >
+                  {<span className="text-gold-300">DREAM TEAM SERVICES</span>}
+                </a>
+              </span>
+            </span>
           </p>
         </div>
       </div>
