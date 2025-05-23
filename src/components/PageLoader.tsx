@@ -134,40 +134,40 @@ const PageLoader: React.FC<PageLoaderProps> = ({ isLoading, onLoadingComplete })
                 }
               }}
             >
-              {/* Logo with loading pulse effect */}
-              <div className="flex items-center justify-center relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-gold-300/30 to-gold-600/30 blur-2xl rounded-full animate-pulse-slow"></div>
-                
-                {/* Animated "DR" initials */}
-                <div className="relative text-5xl font-playfair font-bold text-white">
-                  <span className="inline-block relative">
-                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-gold-300 to-gold-500 animate-shimmer">DR</span>
-                    
-                    {/* Animated circular path around logo */}
-                    <div className="absolute -inset-6">
-                      <svg className="w-full h-full" viewBox="0 0 120 120">
-                        <circle 
-                          cx="60" 
-                          cy="60" 
-                          r="54" 
-                          stroke="url(#gold-gradient)" 
-                          strokeWidth="1.5"
-                          fill="none"
-                          strokeDasharray="339.29"
-                          strokeDashoffset={(339.29 * (100 - progress)) / 100}
-                          className="transition-all duration-200 ease-out"
-                          strokeLinecap="round"
-                        />
-                        <defs>
-                          <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                            <stop offset="0%" stopColor="#f6e05e" />
-                            <stop offset="100%" stopColor="#d69e2e" />
-                          </linearGradient>
-                        </defs>
-                      </svg>
-                    </div>
-                  </span>
-                </div>
+              {/* Animated image replacing "DR" initials */}
+              <div className="relative text-5xl font-playfair font-bold text-white">
+                <span className="inline-block relative">
+                  <img 
+                    src="https://res.cloudinary.com/duq15xsse/image/upload/v1746123838/jhz18sfcnpfdcovh6vbp.jpg"
+                    alt="Dr. Revathi Duba"
+                    className="w-24 h-24 sm:w-32 sm:h-32 rounded-full object-cover border-3 border-gold-400/50"
+                    style={{ boxShadow: "0 0 20px rgba(246, 204, 117, 0.6)" }}
+                  />
+                  
+                  {/* Animated circular path around logo - adjusted for larger image */}
+                  <div className="absolute -inset-8 sm:-inset-10">
+                    <svg className="w-full h-full" viewBox="0 0 120 120">
+                      <circle 
+                        cx="60" 
+                        cy="60" 
+                        r="54" 
+                        stroke="url(#gold-gradient)" 
+                        strokeWidth="1.5"
+                        fill="none"
+                        strokeDasharray="339.29"
+                        strokeDashoffset={(339.29 * (100 - progress)) / 100}
+                        className="transition-all duration-200 ease-out"
+                        strokeLinecap="round"
+                      />
+                      <defs>
+                        <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#f6e05e" />
+                          <stop offset="100%" stopColor="#d69e2e" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                  </div>
+                </span>
               </div>
             </motion.div>
             
