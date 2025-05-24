@@ -179,6 +179,17 @@ const Admin = () => {
     setShowResponseInput(prev => ({ ...prev, [request.id]: false }));
   };
 
+  // Add effect to hide site navigation when admin page is loaded
+  useEffect(() => {
+    // Add class to body to indicate we're on admin page
+    document.body.classList.add('admin-page');
+    
+    // Clean up function to remove class when component unmounts
+    return () => {
+      document.body.classList.remove('admin-page');
+    };
+  }, []);
+
   // If not logged in, show login form
   if (!currentUser) {
     return <AdminLogin />;
@@ -186,6 +197,39 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-navy-900 text-white">
+      {/* Add a style block to hide the site navigation */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+        /* Hide site navigation when on admin page */
+        body.admin-page header {
+          display: none !important;
+        }
+        
+        /* Hide any fixed navigation elements */
+        body.admin-page .fixed.top-0.w-full.z-50,
+        body.admin-page .fixed.top-0.left-0.right-0.z-40 {
+          display: none !important;
+        }
+        
+        /* Hide back-to-top button on admin page */
+        body.admin-page .back-to-top-button,
+        body.admin-page [aria-label="Back to top"] {
+          display: none !important;
+        }
+        
+        /* Ensure proper padding at the top without the navigation */
+        body.admin-page {
+          padding-top: 0 !important;
+        }
+        
+        /* Make sure admin page takes full height */
+        body.admin-page #root,
+        body.admin-page main {
+          min-height: 100vh;
+        }
+        `
+      }} />
+
       <div className="container mx-auto px-4 py-8">
         {/* Responsive header that stacks on mobile */}
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0 mb-8">
