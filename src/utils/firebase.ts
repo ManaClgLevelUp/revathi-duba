@@ -1,6 +1,10 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
-import { getFirestore, collection, addDoc, getDocs, query, orderBy, doc, deleteDoc, updateDoc, onSnapshot } from "firebase/firestore";
+import { 
+  addDoc, collection, orderBy, onSnapshot, query, 
+  getDoc, getDocs, updateDoc, doc, deleteDoc, serverTimestamp,
+  getFirestore
+} from 'firebase/firestore';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -154,6 +158,87 @@ export const updateContactForm = async (id: string, data: any) => {
     return true;
   } catch (error) {
     console.error("Error updating form data:", error);
+    throw error;
+  }
+};
+
+/**
+ * Gallery Management Functions
+ */
+export const saveGalleryItem = async (galleryItem) => {
+  try {
+    const docRef = await addDoc(collection(db, "galleryItems"), {
+      ...galleryItem,
+      timestamp: serverTimestamp(),
+    });
+    return docRef.id;
+  } catch (error) {
+    console.error("Error saving gallery item:", error);
+    throw error;
+  }
+};
+
+export const getGalleryItems = async () => {
+  try {
+    const galleryRef = collection(db, "galleryItems");
+    const q = query(galleryRef, orderBy("timestamp", "desc"));
+    
+    const snapshot = await getDocs(q);
+    const items = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    return items;
+  } catch (error) {
+    console.error("Error in getGalleryItems:", error);
+    throw error;
+  }
+};
+
+export const getGalleryItemsRealtime = (onUpdate, onError) => {
+  try {
+    const galleryRef = collection(db, "galleryItems");
+    const q = query(galleryRef, orderBy("timestamp", "desc"));
+    
+    const unsubscribe = onSnapshot(q, 
+      (snapshot) => {
+        const items = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        onUpdate(items);
+      },
+      (error) => {
+        console.error("Error getting gallery items in realtime:", error);
+        if (onError) onError(error);
+      }
+    );
+    
+    return unsubscribe;
+  } catch (error) {
+    console.error("Error in getGalleryItemsRealtime:", error);
+    if (onError) onError(error);
+    return () => {};
+  }
+};
+
+export const updateGalleryItem = async (id, data) => {
+  try {
+    const galleryRef = doc(db, "galleryItems", id);
+    await updateDoc(galleryRef, data);
+    return true;
+  } catch (error) {
+    console.error("Error updating gallery item:", error);
+    throw error;
+  }
+};
+
+export const deleteGalleryItem = async (id) => {
+  try {
+    await deleteDoc(doc(db, "galleryItems", id));
+    return true;
+  } catch (error) {
+    console.error("Error deleting gallery item:", error);
     throw error;
   }
 };

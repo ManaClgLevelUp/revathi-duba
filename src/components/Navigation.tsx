@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Menu, X, ArrowUp, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useLocation } from 'react-router-dom';
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,6 +11,11 @@ const Navigation = () => {
   const [activeItem, setActiveItem] = useState('home');
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const menuRef = useRef<HTMLDivElement>(null);
+  // Add location hook to detect the current route
+  const location = useLocation();
+  
+  // Check if on gallery page
+  const isGalleryPage = location.pathname === '/gallery';
 
   const navigationItems = [
     { name: 'Home', href: '#home', icon: '🏠' },
@@ -18,6 +24,7 @@ const Navigation = () => {
     { name: 'Research', href: '#research', icon: '🔬' },
     { name: 'Skills', href: '#skills', icon: '⚡' },
     { name: 'Leadership', href: '#leadership', icon: '👑' },
+    { name: 'Gallery', href: '/gallery', icon: '📸', isExternal: true },
     { name: 'Contact', href: '#contact', icon: '✉️' },
   ];
 
@@ -35,7 +42,7 @@ const Navigation = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Handle scroll effects
+  // Handle scroll effects - modify to consider gallery page
   useEffect(() => {
     const handleScroll = () => {
       // Update navbar background on scroll
@@ -52,17 +59,22 @@ const Navigation = () => {
         setShowBackToTop(false);
       }
       
-      // Update active section based on scroll position
-      const sections = navigationItems.map(item => item.href.substring(1));
-      
-      for (const section of sections) {
-        const element = document.getElementById(section);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          // If the section is in view (with some buffer for better UX)
-          if (rect.top <= 150 && rect.bottom >= 150) {
-            setActiveItem(section);
-            break;
+      // Only update active section on non-gallery pages
+      if (!isGalleryPage) {
+        // Update active section based on scroll position
+        const sections = navigationItems
+          .filter(item => !item.isExternal)
+          .map(item => item.href.substring(1));
+        
+        for (const section of sections) {
+          const element = document.getElementById(section);
+          if (element) {
+            const rect = element.getBoundingClientRect();
+            // If the section is in view (with some buffer for better UX)
+            if (rect.top <= 150 && rect.bottom >= 150) {
+              setActiveItem(section);
+              break;
+            }
           }
         }
       }
@@ -70,7 +82,7 @@ const Navigation = () => {
 
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
-  }, [navigationItems]);
+  }, [navigationItems, isGalleryPage]);
 
   // Prevent scrolling when menu is open with improved approach
   useEffect(() => {
@@ -124,6 +136,19 @@ const Navigation = () => {
 
   const scrollToSection = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
+    
+    // Handle external links differently
+    if (href.startsWith('/') && href !== window.location.pathname) {
+      window.location.href = href;
+      return;
+    }
+    
+    // If on gallery page and clicking a non-gallery link, redirect to home with hash
+    if (isGalleryPage && href.startsWith('#')) {
+      window.location.href = `/${href}`;
+      return;
+    }
+    
     const element = document.querySelector(href);
     if (element) {
       // Provide haptic feedback
@@ -222,20 +247,38 @@ const Navigation = () => {
           'fixed top-0 w-full z-50 transition-all duration-500',
           isScrolled 
             ? 'py-3 bg-background/95 backdrop-blur-lg shadow-lg shadow-black/5' 
-            : 'py-5 bg-transparent'
+            : isGalleryPage
+              ? 'py-5 gallery-nav-bg' // Special gallery nav background 
+              : 'py-5 bg-transparent'
         )}
       >
         <div className="luxury-container flex justify-between items-center">
           <motion.a 
-            href="#home" 
-            className="font-playfair text-lg md:text-xl font-medium tracking-tight hover:text-gold-600 transition-colors relative"
-            onClick={(e) => scrollToSection(e, '#home')}
+            href={isGalleryPage ? '/' : '#home'}
+            className={cn(
+              "font-playfair text-lg md:text-xl font-medium tracking-tight transition-colors relative",
+              isGalleryPage && !isScrolled 
+                ? "text-white hover:text-gold-300" 
+                : "hover:text-gold-600"
+            )}
+            onClick={(e) => {
+              if (isGalleryPage) {
+                // Don't prevent default to allow normal navigation
+              } else {
+                scrollToSection(e, '#home');
+              }
+            }}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
           >
             Dr. Revathi Duba
             <motion.div 
-              className="absolute -bottom-1 left-0 h-0.5 bg-gradient-to-r from-gold-600 to-transparent"
+              className={cn(
+                "absolute -bottom-1 left-0 h-0.5", 
+                isGalleryPage && !isScrolled
+                  ? "bg-gradient-to-r from-gold-400 to-transparent" 
+                  : "bg-gradient-to-r from-gold-600 to-transparent"
+              )}
               initial={{ width: 0 }}
               animate={activeItem === 'home' ? { width: '100%' } : { width: 0 }}
               transition={{ duration: 0.3 }}
@@ -243,7 +286,12 @@ const Navigation = () => {
           </motion.a>
 
           <motion.button
-            className="md:hidden flex items-center justify-center w-11 h-11 text-navy-900 bg-white/80 backdrop-blur-sm rounded-full shadow-sm border border-gray-100"
+            className={cn(
+              "md:hidden flex items-center justify-center w-11 h-11 rounded-full shadow-sm border",
+              isGalleryPage && !isScrolled 
+                ? "text-white bg-white/10 backdrop-blur-sm border-white/20" 
+                : "text-navy-900 bg-white/80 backdrop-blur-sm border-gray-100"
+            )}
             onClick={() => {
               triggerHapticFeedback();
               setIsOpen(true);
@@ -261,15 +309,33 @@ const Navigation = () => {
                 key={item.name}
                 href={item.href}
                 onClick={(e) => scrollToSection(e, item.href)}
-                className="text-sm font-inter text-navy-800 hover:text-navy-600 relative px-1 py-2"
+                className={cn(
+                  "text-sm font-inter relative px-1 py-2",
+                  isGalleryPage && !isScrolled 
+                    ? "text-white hover:text-white" 
+                    : "text-navy-800 hover:text-navy-600"
+                )}
                 whileHover={{ y: -2 }}
                 whileTap={{ scale: 0.97 }}
               >
-                {item.name}
+                <span className={cn(
+                  "relative z-10",
+                  isGalleryPage && !isScrolled && "text-shadow-sm"
+                )}>
+                  {item.name}
+                </span>
                 <motion.div 
-                  className="absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r from-gold-500 to-gold-300 rounded-full"
+                  className={cn(
+                    "absolute -bottom-1 left-0 right-0 h-0.5 bg-gradient-to-r rounded-full",
+                    isGalleryPage && !isScrolled
+                      ? "from-gold-300 to-gold-100" 
+                      : "from-gold-500 to-gold-300"
+                  )}
                   initial={{ width: 0, left: '50%' }}
-                  animate={activeItem === item.href.substring(1) ? { width: '100%', left: 0 } : { width: 0, left: '50%' }}
+                  animate={(activeItem === item.href.substring(1) && !item.isExternal) || 
+                          (item.href === '/gallery' && isGalleryPage)
+                    ? { width: '100%', left: 0 } 
+                    : { width: 0, left: '50%' }}
                   transition={{ duration: 0.3 }}
                 />
               </motion.a>
@@ -277,7 +343,7 @@ const Navigation = () => {
           </nav>
         </div>
 
-        {/* Premium mobile navigation overlay */}
+        {/* Mobile navigation overlay */}
         <AnimatePresence>
           {isOpen && (
             <>
@@ -291,14 +357,21 @@ const Navigation = () => {
                 onClick={() => setIsOpen(false)}
               />
               
-              {/* Menu content */}
+              {/* Menu content - Fixed full height for gallery page */}
               <motion.div
                 ref={menuRef}
                 initial="closed"
                 animate="open"
                 exit="closed"
                 variants={menuVariants}
-                className="fixed inset-y-0 left-0 w-[85%] max-w-xs z-50 bg-white shadow-2xl shadow-navy-900/20 flex flex-col"
+                className={cn(
+                  "fixed inset-y-0 left-0 w-[85%] max-w-xs z-50 bg-white shadow-2xl shadow-navy-900/20 flex flex-col",
+                  isGalleryPage && "h-full top-0 bottom-0"  // Ensure full height on gallery page
+                )}
+                style={{
+                  height: isGalleryPage ? '100vh' : undefined,
+                  position: 'fixed'
+                }}
               >
                 {/* Header area */}
                 <div className="relative h-24 bg-gradient-to-r from-navy-900 to-navy-800 px-6 flex items-center">
@@ -379,6 +452,13 @@ const Navigation = () => {
         </AnimatePresence>
       </header>
 
+      {/* Add enhanced backdrop to improve visibility on gallery page - REDUCED HEIGHT */}
+      {isGalleryPage && !isScrolled && (
+        <div className="fixed top-0 left-0 right-0 z-40 h-16 pointer-events-none">
+          <div className="h-full w-full bg-gradient-to-b from-black/80 via-black/40 to-transparent"></div>
+        </div>
+      )}
+
       {/* Enhanced back to top button */}
       <AnimatePresence>
         {showBackToTop && (
@@ -448,6 +528,38 @@ const Navigation = () => {
           });
         `
       }} />
+
+      {/* Custom styles for the gallery navigation */}
+      <style>{`
+        /* Fix for mobile menu opening issues */
+        body.menu-open {
+          position: fixed;
+          width: 100%;
+          height: 100%;
+          overflow: hidden;
+        }
+        
+        .gallery-nav-bg {
+          background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0.3) 40%, rgba(0,0,0,0) 100%);
+          backdrop-filter: blur(4px);
+          -webkit-backdrop-filter: blur(4px);
+        }
+        
+        .text-shadow-sm {
+          text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        /* Remove horizontal line above images in desktop */
+        @media (min-width: 768px) {
+          .gallery-container::before {
+            display: none !important;
+          }
+          
+          .gallery-container > div {
+            border-top: none !important;
+          }
+        }
+      `}</style>
     </>
   );
 };

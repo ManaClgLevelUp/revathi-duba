@@ -10,6 +10,10 @@ import Layout from "./components/Layout";
 import Admin from "./pages/Admin";
 import { AuthProvider } from "./contexts/AuthContext";
 import PageLoader from "./components/PageLoader";
+import Home from './pages/Index';
+import GalleryPage from './components/GalleryPage';
+import Navigation from './components/Navigation';
+import Footer from './components/Footer';
 
 const queryClient = new QueryClient();
 
@@ -37,10 +41,14 @@ const App = () => {
           <Sonner />
           <BrowserRouter>
             <AuthProvider>
+              <Navigation />
               <Routes>
+                <Route path="/" element={<Home />} />
                 <Route path="/admin" element={<Admin />} />
+                <Route path="/gallery" element={<GalleryPage />} />
                 <Route path="/*" element={<Layout><Index /></Layout>} />
               </Routes>
+              <Footer />
             </AuthProvider>
           </BrowserRouter>
         </div>
