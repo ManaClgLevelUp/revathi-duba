@@ -199,7 +199,7 @@ const Hero = () => {
             <span className="relative w-2 h-2 rounded-full bg-gold-500 mr-2 animate-pulse-slow">
               <span className="absolute inset-0 rounded-full bg-gold-500 animate-ping-slow opacity-60"></span>
             </span>
-            <TypedText text="Principal & Academic Director" className="tracking-wide" delay={300} />
+            <TypedText text="Doctoral Degree Holder & Principal Academic Director" className="tracking-wide" delay={300} />
           </div>
           
           {/* Fixed main headline - removed white shading issue */}
@@ -215,35 +215,35 @@ const Hero = () => {
             </span>
           </h1>
           
-          {/* Subtitle with enhanced animation and color treatment */}
+          {/* Subtitle with enhanced animation and color treatment - Now including Ph.D. */}
           <h2 
             ref={el => textRefs.current[1] = el}
             className="font-playfair text-lg sm:text-xl lg:text-2xl font-medium mb-4 sm:mb-5 text-navy-700 
                        transform-gpu animate-reveal-text opacity-0"
             style={{ animationDelay: '0.3s', animationFillMode: 'forwards' }}
           >
-            Academic Leader & <span className="relative text-indigo-700">
-              AI Specialist
+            <span className="relative text-indigo-700">
+              Ph.D. Researcher
               <span className="absolute -bottom-1 left-0 right-0 h-[2px] bg-indigo-400/30"></span>
-            </span>
+            </span> & Academic Leader
           </h2>
           
-          {/* Description paragraph with enhanced reveal animation */}
+          {/* Description paragraph with enhanced reveal animation - Now including Ph.D. information */}
           <p 
             ref={el => textRefs.current[2] = el}
             className="text-navy-600 text-sm sm:text-base max-w-lg leading-relaxed mb-5 sm:mb-6 transform-gpu animate-reveal-text opacity-0"
             style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}
           >
-            Principal, Director of Academics, and expert in <span className="text-navy-800 font-medium">Artificial Intelligence</span>, 
-            <span className="text-navy-800 font-medium"> Machine Learning</span>, and <span className="text-navy-800 font-medium">Data Science</span> with a passion for innovation and education.
+            <span className="text-navy-800 font-medium">Holds a Ph.D. in Electrical and Computer Engineering</span> with research expertise in AI applications for power systems. Principal, Director of Academics, and expert in <span className="text-navy-800 font-medium">Artificial Intelligence</span>, 
+            <span className="text-navy-800 font-medium"> Machine Learning</span>, and <span className="text-navy-800 font-medium"> Data Science</span>.
           </p>
           
-          {/* Badges section - with improved spacing */}
+          {/* Badges section - with improved spacing and Ph.D. research areas */}
           <div 
             className="flex flex-wrap gap-2 mb-5 sm:mb-6"
             style={{ animationDelay: '0.6s', animationFillMode: 'forwards' }}
           >
-            {['AI Research', 'Academia', 'Leadership', 'Education', 'Innovation'].map((badge, index) => (
+            {['Doctoral Research', 'AI Research', 'Power Systems', 'Academia', 'Leadership', 'Innovation'].map((badge, index) => (
               <span 
                 key={index} 
                 className="inline-block px-3 py-1 bg-navy-50 text-navy-700 text-xs rounded-full border border-navy-100 animate-fade-in-up"
@@ -314,8 +314,8 @@ const Hero = () => {
               <p className="text-xs text-navy-600">Publications</p>
             </div>
             <div className="text-center">
-              <p className="text-2xl md:text-3xl font-playfair font-bold text-navy-900">3+</p>
-              <p className="text-xs text-navy-600">Awards</p>
+              <p className="text-2xl md:text-3xl font-playfair font-bold text-navy-900">Ph.D.</p>
+              <p className="text-xs text-navy-600">Completed</p>
             </div>
           </div>
         </div>

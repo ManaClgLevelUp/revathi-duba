@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { GraduationCap, MapPin, Calendar, Award, ExternalLink, ChevronRight, ChevronDown, ChevronUp, BookOpen } from 'lucide-react';
 
-// Animation styles as a separate component to avoid TypeScript errors with style jsx
+// Animation styles as a separate component to avoid TypeScript errors
 const AnimationStyles = () => (
   <style dangerouslySetInnerHTML={{ __html: `
     @keyframes ping-slow {
@@ -46,11 +46,11 @@ const Education = () => {
   
   const educationHistory = [
     {
-      degree: 'Ph.D.: Electrical Engineering',
+      degree: 'Ph.D.: Electrical and Computer Engineering',
       institution: 'Lincoln University College',
       location: 'Malaysia',
-      years: '2025',
-      description: 'Conducting doctoral research focused on advanced applications of AI in electrical power systems.',
+      years: '2023',
+      description: 'Doctoral research focused on advanced applications of AI in electrical power systems.',
       achievements: ['Research focusing on AI integration in smart grid systems', 'International research collaboration'],
       color: 'bg-indigo-600',
       gradient: 'from-indigo-400 to-indigo-600',

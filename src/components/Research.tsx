@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Book, FileText, Calendar, Award, Search, Download, ExternalLink, Users, Filter, X, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
+import { FileText, Users, Calendar, Book, Filter, X, Search, ChevronDown } from 'lucide-react';
 
 const Research = () => {
   const [activeCategory, setActiveCategory] = useState('all');
@@ -24,7 +24,8 @@ const Research = () => {
       category: "journals",
       link: "#",
       highlighted: true,
-      type: "Article"
+      type: "Article",
+      specialization: "Electrical and Computer Engineering"
     },
     {
       id: 2,
@@ -35,7 +36,8 @@ const Research = () => {
       doi: "10.55041/IJSREM37587",
       category: "journals",
       link: "#",
-      type: "Article"
+      type: "Article",
+      specialization: "Electrical and Computer Engineering"
     },
     {
       id: 3,
@@ -44,7 +46,8 @@ const Research = () => {
       year: 2024,
       category: "conferences",
       link: "#",
-      type: "Conference"
+      type: "Conference",
+      specialization: "Electrical and Computer Engineering"
     },
     {
       id: 4,
@@ -53,7 +56,8 @@ const Research = () => {
       year: 2024,
       category: "conferences",
       link: "#",
-      type: "Conference"
+      type: "Conference",
+      specialization: "Electrical and Computer Engineering"
     },
     {
       id: 5,
@@ -62,7 +66,8 @@ const Research = () => {
       year: 2023,
       category: "conferences",
       link: "#",
-      type: "Conference"
+      type: "Conference",
+      specialization: "Electrical and Computer Engineering"
     },
     {
       id: 6,
@@ -74,7 +79,8 @@ const Research = () => {
       year: 2020,
       category: "journals",
       link: "#",
-      type: "Article"
+      type: "Article",
+      specialization: "Electrical and Computer Engineering"
     },
     {
       id: 7,
@@ -84,7 +90,8 @@ const Research = () => {
       year: 2019,
       category: "journals",
       link: "#",
-      type: "Article"
+      type: "Article",
+      specialization: "Electrical and Computer Engineering"
     },
     {
       id: 8,
@@ -93,7 +100,8 @@ const Research = () => {
       year: 2019,
       category: "journals",
       link: "#",
-      type: "Article"
+      type: "Article",
+      specialization: "Electrical and Computer Engineering"
     },
     {
       id: 9,
@@ -103,7 +111,8 @@ const Research = () => {
       year: 2017,
       category: "journals",
       link: "#",
-      type: "Article"
+      type: "Article",
+      specialization: "Electrical and Computer Engineering"
     },
     {
       id: 10,
@@ -113,7 +122,8 @@ const Research = () => {
       year: 2016,
       category: "conferences",
       link: "#",
-      type: "Conference"
+      type: "Conference",
+      specialization: "Electrical and Computer Engineering"
     },
     {
       id: 11,
@@ -122,7 +132,8 @@ const Research = () => {
       year: 2015,
       category: "journals",
       link: "#",
-      type: "Article"
+      type: "Article",
+      specialization: "Electrical and Computer Engineering"
     },
     {
       id: 12,
@@ -131,7 +142,8 @@ const Research = () => {
       year: 2015,
       category: "journals",
       link: "#",
-      type: "Article"
+      type: "Article",
+      specialization: "Electrical and Computer Engineering"
     },
     {
       id: 13,
@@ -140,7 +152,8 @@ const Research = () => {
       year: 2018,
       category: "journals",
       link: "#",
-      type: "Article"
+      type: "Article",
+      specialization: "Electrical and Computer Engineering"
     },
     {
       id: 14,
@@ -149,7 +162,8 @@ const Research = () => {
       year: 2016,
       category: "journals",
       link: "#",
-      type: "Article"
+      type: "Article",
+      specialization: "Electrical and Computer Engineering"
     },
     {
       id: 15,
@@ -158,7 +172,8 @@ const Research = () => {
       year: 2017,
       category: "journals",
       link: "#",
-      type: "Article"
+      type: "Article",
+      specialization: "Electrical and Computer Engineering"
     }
   ];
   
@@ -353,16 +368,16 @@ const Research = () => {
                 <label className="block mb-2 text-sm font-medium text-navy-600">Category</label>
                 <div className="flex flex-wrap gap-2">
                   {categories.map((category) => (
-                    <button 
+                    <button
                       key={category}
-                      onClick={() => setActiveCategory(category)}
                       className={`px-3 py-1.5 rounded-md text-sm transition-all ${
                         activeCategory === category 
-                          ? 'bg-navy-800 text-white shadow-md' 
-                          : 'bg-white hover:bg-navy-50 text-navy-700 border border-navy-100'
+                          ? 'bg-indigo-500 text-white shadow-md shadow-indigo-500/20' 
+                          : 'bg-white text-navy-700 border border-gray-200 hover:bg-indigo-50'
                       }`}
+                      onClick={() => setActiveCategory(category)}
                     >
-                      {category === 'all' ? 'All' : category.charAt(0).toUpperCase() + category.slice(1)}
+                      {category.charAt(0).toUpperCase() + category.slice(1)}
                     </button>
                   ))}
                 </div>
@@ -376,7 +391,7 @@ const Research = () => {
                   className="w-full md:w-auto px-3 py-2 bg-white border border-gray-200 rounded-md text-navy-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
                 >
                   <option value="all">All Years</option>
-                  {years.map((year) => (
+                  {years.map(year => (
                     <option key={year} value={year}>{year}</option>
                   ))}
                 </select>
@@ -393,14 +408,9 @@ const Research = () => {
           
           <div className="text-navy-500 text-sm">
             {filteredPublications.length > 0 ? (
-              <span>Sorted by newest first</span>
+              <span>Research focus: <span className="text-navy-900 font-medium">Electrical and Computer Engineering</span></span>
             ) : (
-              <button 
-                onClick={resetFilters}
-                className="text-indigo-600 hover:text-indigo-800 hover:underline"
-              >
-                Clear filters to show all publications
-              </button>
+              <span>No publications match your filter criteria</span>
             )}
           </div>
         </div>
@@ -410,89 +420,72 @@ const Research = () => {
           {filteredPublications.length === 0 ? (
             <div className="text-center py-12 bg-white/50 rounded-lg">
               <FileText size={48} className="mx-auto text-navy-300 mb-4" />
-              <h3 className="text-xl font-medium text-navy-700 mb-2">No publications found</h3>
-              <p className="text-navy-500 mb-4">Try adjusting your search or filters to find what you're looking for.</p>
+              <h3 className="text-lg font-medium text-navy-900 mb-2">No publications found</h3>
+              <p className="text-navy-600 mb-4">Try adjusting your search or filter criteria</p>
               <button 
                 onClick={resetFilters}
-                className="px-4 py-2 bg-navy-800 text-white rounded-md hover:bg-navy-700 transition-all"
+                className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-md hover:bg-indigo-200 transition-colors"
               >
-                Reset All Filters
+                Reset all filters
               </button>
             </div>
           ) : (
             visiblePublications.map((pub, index) => (
               <div 
-                key={pub.id} 
-                className={`luxury-card group bg-white hover:shadow-lg hover:shadow-indigo-100/40 border-l-4 ${
-                  pub.highlighted ? 'border-l-indigo-500' : 'border-l-transparent'
-                } transition-all duration-300 ${getAnimationClass(index)}`}
+                key={pub.id}
+                className={`bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden border-l-4 ${
+                  pub.highlighted ? 'border-indigo-500' : 'border-transparent'
+                } ${getAnimationClass(index)}`}
                 onClick={() => setActivePublication(activePublication === pub.id ? null : pub.id)}
               >
-                <div className="flex items-start gap-4">
-                  <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
-                    pub.category === 'journals' ? 'bg-indigo-50 text-indigo-500' : 'bg-amber-50 text-amber-500'
-                  }`}>
-                    {pub.category === 'journals' ? <FileText size={20} /> : <Award size={20} />}
+                <div className="p-6">
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                      {pub.category === 'journals' ? 'Journal' : 'Conference'}
+                    </span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                      {pub.year}
+                    </span>
+                    {pub.highlighted && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                        Featured
+                      </span>
+                    )}
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      Electrical and Computer Engineering
+                    </span>
                   </div>
                   
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap justify-between items-start gap-2">
-                      <h3 className="text-lg font-playfair font-medium mb-2 text-navy-900 group-hover:text-indigo-700 transition-colors">
-                        {pub.title}
-                      </h3>
-                      <span className={`shrink-0 text-xs px-2 py-1 rounded ${
-                        pub.category === 'journals' ? 'bg-indigo-50 text-indigo-700' : 'bg-amber-50 text-amber-700'
-                      }`}>
-                        {pub.type}
-                      </span>
-                    </div>
-                    
-                    {pub.authors && (
-                      <p className="text-navy-600 text-sm mb-2 flex items-center">
-                        <Users size={14} className="mr-1.5 text-navy-400" />
-                        {pub.authors}
-                      </p>
-                    )}
-                    
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                      <p className="text-navy-500 text-xs inline-flex items-center">
-                        <Book size={14} className="mr-1 text-navy-400" />
-                        {pub.journal}
-                        {pub.volume && <span className="ml-1">({pub.volume})</span>}
-                      </p>
-                      
-                      <p className="text-navy-500 text-xs inline-flex items-center">
-                        <Calendar size={14} className="mr-1 text-navy-400" />
-                        {pub.year}
-                      </p>
-                      
-                      {pub.doi && (
-                        <p className="text-navy-500 text-xs inline-flex items-center">
-                          <span className="mr-1 font-medium">DOI:</span>
-                          {pub.doi}
-                        </p>
-                      )}
-                    </div>
-                    
-                    {/* Action buttons - with responsive layout */}
-                    <div className={`mt-4 flex flex-wrap gap-2 transition-all duration-300 ${
-                      activePublication === pub.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-                    }`}>
-                      <button className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 text-indigo-700 text-xs rounded hover:bg-indigo-100 transition-colors">
-                        <ExternalLink size={14} />
-                        <span className="sm:inline">View</span>
-                      </button>
-                      
-                      <button className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-emerald-50 text-emerald-700 text-xs rounded hover:bg-emerald-100 transition-colors">
-                        <Download size={14} />
-                        <span className="sm:inline">PDF</span>
-                      </button>
-                      
-                      <button className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 text-amber-700 text-xs rounded hover:bg-amber-100 transition-colors">
-                        <FileText size={14} />
-                        <span className="sm:inline">Cite</span>
-                      </button>
-                    </div>
+                  <h3 className="text-lg font-medium text-navy-900 mb-3">{pub.title}</h3>
+                  
+                  {pub.authors && (
+                    <p className="text-navy-700 mb-2 text-sm">
+                      <span className="font-medium">Authors:</span> {pub.authors}
+                    </p>
+                  )}
+                  
+                  <p className="text-navy-600 text-sm mb-2">
+                    <span className="font-medium">Published in:</span> {pub.journal}
+                    {pub.volume && `, Volume ${pub.volume}`}
+                    {pub.pages && `, Pages ${pub.pages}`}
+                  </p>
+                  
+                  {pub.doi && (
+                    <p className="text-navy-600 text-sm mb-4">
+                      <span className="font-medium">DOI:</span> {pub.doi}
+                    </p>
+                  )}
+                  
+                  <div className="flex justify-end">
+                    <a 
+                      href={pub.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="inline-flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      View Publication
+                    </a>
                   </div>
                 </div>
               </div>
@@ -500,41 +493,33 @@ const Research = () => {
           )}
         </div>
         
-        {/* Load More/Less Buttons */}
-        <div ref={loadMoreRef} className="mt-8 text-center animate-fade-in flex justify-center gap-4">
-          {hasMorePublications && (
-            <button 
-              onClick={loadMorePublications}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-indigo-200 text-navy-800 rounded-md hover:bg-indigo-50 hover:border-indigo-300 transition-all group shadow-sm"
-            >
-              <span>Show More</span>
-              <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform" />
-            </button>
-          )}
-          
-          {publicationsToShow > 3 && (
-            <button 
-              onClick={showLessPublications}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white border border-indigo-200 text-navy-800 rounded-md hover:bg-indigo-50 hover:border-indigo-300 transition-all group shadow-sm"
-            >
-              <span>Show Less</span>
-              <ChevronUp size={16} className="group-hover:-translate-y-1 transition-transform" />
-            </button>
-          )}
-        </div>
-        
-        {/* More Publications Link */}
-        <div className="mt-12 text-center">
-          <a 
-            href="https://scholar.google.com/citations?user=j75rs0IAAAAJ&hl=en" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-navy-800 text-white rounded-md hover:bg-navy-700 transition-all group"
+        {/* Load More Button */}
+        {hasMorePublications && (
+          <div 
+            ref={loadMoreRef}
+            className="mt-8 text-center"
           >
-            <span>View Complete Publication Profile</span>
-            <ExternalLink size={16} className="group-hover:translate-x-1 transition-transform" />
-          </a>
-        </div>
+            <button
+              onClick={loadMorePublications}
+              className="px-5 py-2.5 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+            >
+              Load More Publications
+            </button>
+          </div>
+        )}
+        
+        {/* Show Less Button (when showing more than initial count) */}
+        {publicationsToShow > 3 && filteredPublications.length > 3 && (
+          <div className="mt-4 text-center">
+            <button
+              onClick={showLessPublications}
+              className="px-5 py-2.5 bg-white border border-gray-200 text-navy-700 rounded-md hover:bg-gray-50 transition-colors"
+            >
+              Show Less
+            </button>
+          </div>
+        )}
+        
       </div>
     </section>
   );
