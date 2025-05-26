@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
+import { useToast } from '@/hooks/use-toast'; // Add this import for toast notifications
 import { 
   X, 
   Maximize2, 
@@ -12,9 +13,10 @@ import {
   Download, 
   Share2,
   Info,
-  Eye
+  Eye,
+  Folder
 } from 'lucide-react';
-import { getGalleryItemsRealtime } from '../utils/firebase';
+import { getGalleryItemsRealtime, getGalleryCollectionsRealtime, getCollectionItems } from '../utils/firebase';
 import { cn } from '@/lib/utils';
 import PageLoader from './PageLoader';
 
@@ -27,6 +29,17 @@ interface GalleryItem {
   mediaUrl: string;
   thumbnailUrl?: string;
   mediaType?: 'image' | 'video';
+  timestamp?: any;
+}
+
+// Define the structure of a gallery collection
+interface GalleryCollection {
+  id: string;
+  name: string;
+  description?: string;
+  category?: string;
+  thumbnailUrl: string;
+  itemCount: number;
   timestamp?: any;
 }
 
@@ -43,12 +56,16 @@ const GalleryPage: React.FC = () => {
   const [showInfo, setShowInfo] = useState(true);
   const [loadedImages, setLoadedImages] = useState<Record<string, boolean>>({});
   const [scrollY, setScrollY] = useState(0);
+  const [collections, setCollections] = useState<GalleryCollection[]>([]);
+  const [activeCollection, setActiveCollection] = useState<string | null>(null);
+  const [collectionItems, setCollectionItems] = useState<GalleryItem[]>([]);
+  const [isLoadingCollection, setIsLoadingCollection] = useState(false);
   
   const galleryRef = useRef<HTMLDivElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.3], [1, 0.2]);
-
+  const { toast } = useToast(); // Add toast hook
   // Load gallery items with real-time updates
   useEffect(() => {
     const unsubscribe = getGalleryItemsRealtime(
@@ -73,6 +90,27 @@ const GalleryPage: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
+  // Load collections with real-time updates
+  useEffect(() => {
+    // Replace the one-time fetch with real-time updates
+    const unsubscribe = getGalleryCollectionsRealtime(
+      (collections) => {
+        setCollections(collections as GalleryCollection[]);
+      },
+      (error) => {
+        console.error("Error loading collections:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load collections. Please try again.",
+          variant: "destructive"
+        });
+      }
+    );
+    
+    // Clean up subscription when component unmounts
+    return () => unsubscribe();
+  }, [toast]); // Add toast dependency
+
   // Apply filters when active filter or gallery items change
   useEffect(() => {
     if (activeFilter === 'all') {
@@ -81,6 +119,44 @@ const GalleryPage: React.FC = () => {
       setFilteredItems(galleryItems.filter(item => item.category === activeFilter));
     }
   }, [activeFilter, galleryItems]);
+
+  // Load collection items when a collection is selected
+  useEffect(() => {
+    if (!activeCollection) return;
+    
+    const loadCollectionItems = async () => {
+      setIsLoadingCollection(true);
+      setError(''); // Clear any previous errors
+      
+      try {
+        console.log("Loading collection items for:", activeCollection);
+        const items = await getCollectionItems(activeCollection);
+        console.log("Loaded items:", items.length);
+        setCollectionItems(items as GalleryItem[]);
+        
+        if (items.length === 0) {
+          // Show a message for empty collections
+          toast({
+            title: "Empty Collection",
+            description: "This collection doesn't have any items yet.",
+          });
+        }
+      } catch (error) {
+        console.error("Error loading collection items:", error);
+        setError('Failed to load collection items. Please try again.');
+        
+        toast({
+          title: "Error Loading Items",
+          description: "There was a problem loading items from this collection.",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoadingCollection(false);
+      }
+    };
+    
+    loadCollectionItems();
+  }, [activeCollection, toast]); // Add toast to dependencies
 
   // Track scroll position for parallax effects
   useEffect(() => {
@@ -290,6 +366,85 @@ const GalleryPage: React.FC = () => {
     };
   }, []);
 
+  // Function to view a collection
+  const viewCollection = (collectionId: string) => {
+    setActiveCollection(collectionId);
+    // Scroll to gallery section
+    const galleryElement = galleryRef.current;
+    if (galleryElement) {
+      galleryElement.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+  
+  // Function to exit collection view
+  const exitCollectionView = () => {
+    setActiveCollection(null);
+    setCollectionItems([]);
+  };
+
+  // Render a collection card
+  const CollectionCard = ({ collection }: { collection: GalleryCollection }) => {
+    return (
+      <motion.div
+        variants={cardVariants}
+        whileHover="hover"
+        className="relative overflow-hidden rounded-xl bg-white shadow-lg transform transition-all duration-300 group cursor-pointer"
+        onClick={() => viewCollection(collection.id)}
+      >
+        <div className="aspect-[4/3] overflow-hidden bg-navy-50">
+          {collection.thumbnailUrl ? (
+            <div className="relative h-full">
+              <img
+                src={optimizeImageUrl(collection.thumbnailUrl)}
+                alt={collection.name || "Collection"}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                loading="lazy"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute bottom-0 left-0 right-0 p-4">
+                <div className="bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg inline-flex items-center">
+                  <Folder className="w-4 h-4 text-navy-700 mr-2" />
+                  <span className="font-medium text-navy-800 text-sm">{collection.itemCount} items</span>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="h-full w-full flex items-center justify-center bg-navy-100">
+              <Folder className="w-12 h-12 text-navy-400" />
+            </div>
+          )}
+          
+          {/* Collection badge */}
+          {collection.category && (
+            <div className="absolute top-3 left-3 px-2 py-1 bg-navy-800/80 backdrop-blur-sm rounded-lg text-xs text-white shadow-lg">
+              {collection.category}
+            </div>
+          )}
+        </div>
+        
+        {/* Content info */}
+        <div className="p-4 bg-white">
+          <h3 className="font-medium text-navy-900 text-lg">
+            {collection.name || ""}
+          </h3>
+          
+          {collection.description && (
+            <p className="text-navy-600 text-sm mt-1 line-clamp-2">
+              {collection.description}
+            </p>
+          )}
+          
+          {collection.timestamp && (
+            <div className="flex items-center text-xs text-navy-500 mt-2">
+              <Calendar className="w-3 h-3 mr-1" />
+              <span>{formatDate(collection.timestamp)}</span>
+            </div>
+          )}
+        </div>
+      </motion.div>
+    );
+  };
+
   return (
     <motion.section 
       className="min-h-screen bg-gradient-to-b from-navy-50/40 via-white to-white gallery-container"
@@ -317,8 +472,8 @@ const GalleryPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Parallax Hero Header - Increased height and added min-height */}
-      <div className="relative h-[60vh] md:h-[70vh] min-h-[400px] overflow-hidden">
+      {/* Parallax Hero Header - Taller on desktop screens */}
+      <div className="relative h-[60vh] md:h-[70vh] lg:h-[85vh] xl:h-[90vh] min-h-[400px] overflow-hidden">
         <motion.div
           className="absolute inset-0 z-0"
           style={{ 
@@ -353,8 +508,8 @@ const GalleryPage: React.FC = () => {
           <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-navy-500/10 blur-3xl"></div>
         </motion.div>
         
-        {/* Header Content with improved positioning */}
-        <div className="container mx-auto px-4 h-full relative z-10 flex flex-col justify-center items-center pt-24">
+        {/* Header Content with improved positioning - reduced padding on desktop */}
+        <div className="container mx-auto px-4 h-full relative z-10 flex flex-col justify-center items-center pt-24 lg:pt-2">
           <motion.h1 
             className="text-4xl md:text-5xl lg:text-6xl font-playfair font-bold text-white mb-6 text-center"
             initial={{ opacity: 0, y: 30 }}
@@ -396,8 +551,44 @@ const GalleryPage: React.FC = () => {
       
       {/* Main Gallery Container */}
       <div className="container mx-auto px-4 py-12 md:py-16" ref={galleryRef}>
-        {/* Category Filter Pills */}
-        {categories.length > 0 && (
+        {/* Collection header & back button if in collection view */}
+        {activeCollection && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mb-8"
+          >
+            <button 
+              onClick={exitCollectionView}
+              className="mb-4 px-3 py-1.5 bg-navy-100 hover:bg-navy-200 text-navy-700 rounded flex items-center text-sm font-medium"
+            >
+              <ChevronLeft size={16} className="mr-1" />
+              <span>Back to all categories</span>
+            </button>
+            
+            {collections.find(c => c.id === activeCollection) && (
+              <div className="bg-white shadow-md rounded-lg p-4 mb-6">
+                <h2 className="text-xl font-playfair text-navy-800 mb-1">
+                  {collections.find(c => c.id === activeCollection)?.name}
+                </h2>
+                {collections.find(c => c.id === activeCollection)?.description && (
+                  <p className="text-navy-600 text-sm">
+                    {collections.find(c => c.id === activeCollection)?.description}
+                  </p>
+                )}
+              </div>
+            )}
+            
+            {isLoadingCollection && (
+              <div className="flex justify-center items-center py-12">
+                <div className="w-8 h-8 border-4 border-navy-200 border-t-navy-500 rounded-full animate-spin"></div>
+              </div>
+            )}
+          </motion.div>
+        )}
+        
+        {/* Category Filter Pills - Only show when not in a collection */}
+        {!activeCollection && categories.length > 0 && (
           <motion.div 
             className="flex flex-wrap justify-center gap-3 mb-10"
             initial={{ opacity: 0, y: 20 }}
@@ -435,13 +626,15 @@ const GalleryPage: React.FC = () => {
           </motion.div>
         )}
         
+        {/* Error message */}
         {error && (
           <div className="text-center text-red-500 py-10">
             <p>{error}</p>
           </div>
         )}
         
-        {!isLoading && filteredItems.length === 0 && (
+        {/* Empty state */}
+        {!isLoading && !activeCollection && filteredItems.length === 0 && collections.length === 0 && (
           <div className="text-center text-navy-500 py-16">
             <ImageIcon size={48} className="mx-auto mb-4 opacity-30" />
             <h3 className="text-xl font-medium mb-2">No Gallery Items Yet</h3>
@@ -449,129 +642,165 @@ const GalleryPage: React.FC = () => {
           </div>
         )}
         
-        {/* Masonry Gallery Grid */}
-        <motion.div 
-          className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5"
-          initial="hidden"
-          animate="visible"
-          variants={{
-            visible: {
-              transition: {
-                staggerChildren: 0.1
-              }
-            }
-          }}
-        >
-          {filteredItems.map((item) => (
-            <motion.div
-              key={item.id}
-              variants={cardVariants}
-              whileHover="hover"
-              className="relative overflow-hidden rounded-xl bg-white shadow-md transform transition-all duration-300 group cursor-pointer"
-              onClick={() => openLightbox(item)}
+        {/* Collections Grid - Only show when not in a collection and collections exist */}
+        {!activeCollection && collections.length > 0 && (
+          <div className="mb-16">
+            <h2 className="text-2xl font-playfair text-navy-800 mb-6 flex items-center">
+              <Folder className="mr-2 text-gold-500" size={20} />
+              <span>Collections</span>
+            </h2>
+            
+            <motion.div 
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                visible: {
+                  transition: { staggerChildren: 0.1 }
+                }
+              }}
             >
-              <div className="aspect-[4/3] overflow-hidden bg-navy-50">
-                {!loadedImages[item.id] && (
-                  <div className="absolute inset-0 bg-navy-100/50 flex items-center justify-center animate-pulse">
+              {collections.map((collection) => (
+                <CollectionCard key={collection.id} collection={collection} />
+              ))}
+            </motion.div>
+          </div>
+        )}
+        
+        {/* Masonry Gallery Grid - Show all items when not in collection, or collection items when in one */}
+        {(!activeCollection || (activeCollection && collectionItems.length > 0)) && (
+          <>
+            <h2 className="text-2xl font-playfair text-navy-800 mb-6 flex items-center">
+              <ImageIcon className="mr-2 text-gold-500" size={20} />
+              <span>
+                {activeCollection 
+                  ? `${collections.find(c => c.id === activeCollection)?.name} Gallery` 
+                  : 'All Images'}
+              </span>
+            </h2>
+            
+            <motion.div 
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5"
+              initial="hidden"
+              animate="visible"
+              variants={{
+                visible: {
+                  transition: { staggerChildren: 0.1 }
+                }
+              }}
+            >
+              {(activeCollection ? collectionItems : filteredItems).map((item) => (
+                <motion.div
+                  key={item.id}
+                  variants={cardVariants}
+                  whileHover="hover"
+                  className="relative overflow-hidden rounded-xl bg-white shadow-md transform transition-all duration-300 group cursor-pointer"
+                  onClick={() => openLightbox(item)}
+                >
+                  <div className="aspect-[4/3] overflow-hidden bg-navy-50">
+                    {!loadedImages[item.id] && (
+                      <div className="absolute inset-0 bg-navy-100/50 flex items-center justify-center animate-pulse">
+                        {isVideo(item) ? (
+                          <FilmIcon className="w-8 h-8 text-navy-300" />
+                        ) : (
+                          <ImageIcon className="w-8 h-8 text-navy-300" />
+                        )}
+                      </div>
+                    )}
+                    
                     {isVideo(item) ? (
-                      <FilmIcon className="w-8 h-8 text-navy-300" />
+                      <div className="relative h-full flex items-center justify-center bg-navy-900/80">
+                        <img
+                          src={item.thumbnailUrl || item.mediaUrl}
+                          alt={item.title || "Video thumbnail"}
+                          className={cn(
+                            "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
+                            !loadedImages[item.id] && "opacity-0"
+                          )}
+                          loading="lazy"
+                          onLoad={() => handleImageLoaded(item.id)}
+                        />
+                        <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
+                            <Play className="w-8 h-8 text-navy-800 ml-1" />
+                          </div>
+                        </div>
+                      </div>
                     ) : (
-                      <ImageIcon className="w-8 h-8 text-navy-300" />
+                      <div className="relative h-full">
+                        <img
+                          src={optimizeImageUrl(item.mediaUrl)}
+                          alt={item.title || "Gallery Image"}
+                          className={cn(
+                            "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
+                            !loadedImages[item.id] && "opacity-0"
+                          )}
+                          loading="lazy"
+                          onLoad={() => handleImageLoaded(item.id)}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      </div>
+                    )}
+                    
+                    {/* View button */}
+                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
+                      <motion.div 
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.95 }}
+                        className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg"
+                      >
+                        <Eye className="w-4 h-4 text-navy-800" />
+                        <span className="text-sm font-medium text-navy-800">View</span>
+                      </motion.div>
+                    </div>
+                    
+                    {/* Category badge */}
+                    {item.category && (
+                      <div className="absolute top-3 left-3 px-2 py-1 bg-navy-800/80 backdrop-blur-sm rounded-lg text-xs text-white shadow-lg">
+                        {item.category}
+                      </div>
+                    )}
+                    
+                    {/* Media type indicator */}
+                    <div className="absolute top-3 right-3 w-8 h-8 rounded-full backdrop-blur-sm flex items-center justify-center">
+                      {isVideo(item) ? (
+                        <div className="bg-navy-800/80 text-white p-1.5 rounded-full">
+                          <Play className="w-5 h-5" />
+                        </div>
+                      ) : (
+                        <div className="bg-white/80 text-navy-800 p-1.5 rounded-full">
+                          <ImageIcon className="w-5 h-5" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  {/* Content info */}
+                  <div className="p-4 bg-white">
+                    <h3 className="font-medium text-navy-900 line-clamp-1">
+                      {item.title || ""}
+                    </h3>
+                    
+                    {item.timestamp && (
+                      <div className="flex items-center text-xs text-navy-500 mt-2">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        <span>{formatDate(item.timestamp)}</span>
+                      </div>
                     )}
                   </div>
-                )}
-                
-                {isVideo(item) ? (
-                  <div className="relative h-full flex items-center justify-center bg-navy-900/80">
-                    <img
-                      src={item.thumbnailUrl || item.mediaUrl}
-                      alt={item.title || "Video thumbnail"}
-                      className={cn(
-                        "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
-                        !loadedImages[item.id] && "opacity-0"
-                      )}
-                      loading="lazy"
-                      onLoad={() => handleImageLoaded(item.id)}
-                    />
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="w-16 h-16 rounded-full bg-white/90 flex items-center justify-center shadow-xl group-hover:scale-110 transition-transform duration-300">
-                        <Play className="w-8 h-8 text-navy-800 ml-1" />
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="relative h-full">
-                    <img
-                      src={optimizeImageUrl(item.mediaUrl)}
-                      alt={item.title || "Gallery Image"}
-                      className={cn(
-                        "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
-                        !loadedImages[item.id] && "opacity-0"
-                      )}
-                      loading="lazy"
-                      onLoad={() => handleImageLoaded(item.id)}
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                  </div>
-                )}
-                
-                {/* View button */}
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10">
-                  <motion.div 
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="flex items-center gap-2 bg-white/90 backdrop-blur-sm px-3 py-2 rounded-lg shadow-lg"
-                  >
-                    <Eye className="w-4 h-4 text-navy-800" />
-                    <span className="text-sm font-medium text-navy-800">View</span>
-                  </motion.div>
-                </div>
-                
-                {/* Category badge */}
-                {item.category && (
-                  <div className="absolute top-3 left-3 px-2 py-1 bg-navy-800/80 backdrop-blur-sm rounded-lg text-xs text-white shadow-lg">
-                    {item.category}
-                  </div>
-                )}
-                
-                {/* Media type indicator */}
-                <div className="absolute top-3 right-3 w-8 h-8 rounded-full backdrop-blur-sm flex items-center justify-center">
-                  {isVideo(item) ? (
-                    <div className="bg-navy-800/80 text-white p-1.5 rounded-full">
-                      <Play className="w-5 h-5" />
-                    </div>
-                  ) : (
-                    <div className="bg-white/80 text-navy-800 p-1.5 rounded-full">
-                      <ImageIcon className="w-5 h-5" />
+                  
+                  {/* Hover overlay with description preview */}
+                  {item.description && (
+                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-navy-900 to-transparent p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+                      <p className="text-white text-sm line-clamp-2">{item.description}</p>
                     </div>
                   )}
-                </div>
-              </div>
-              
-              {/* Content info */}
-              <div className="p-4 bg-white">
-                <h3 className="font-medium text-navy-900 line-clamp-1">
-                  {item.title || "Untitled"}
-                </h3>
-                
-                {item.timestamp && (
-                  <div className="flex items-center text-xs text-navy-500 mt-2">
-                    <Calendar className="w-3 h-3 mr-1" />
-                    <span>{formatDate(item.timestamp)}</span>
-                  </div>
-                )}
-              </div>
-              
-              {/* Hover overlay with description preview */}
-              {item.description && (
-                <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-navy-900 to-transparent p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                  <p className="text-white text-sm line-clamp-2">{item.description}</p>
-                </div>
-              )}
+                </motion.div>
+              ))}
             </motion.div>
-          ))}
-        </motion.div>
+          </>
+        )}
       </div>
       
       {/* Lightbox Modal - Now darkbox */}
@@ -746,46 +975,37 @@ const GalleryPage: React.FC = () => {
         
         /* Mobile-specific fixes for horizontal lines */
         @media (max-width: 768px) {
-          /* Target any potential dividers in the mobile view */
-          .gallery-container > div,
-          .gallery-container > div::before,
-          .gallery-container > div::after,
-          .container > div,
-          .container div[ref="galleryRef"],
-          .relative.h-\\[60vh\\],
-          .relative.h-\\[60vh\\] + div,
-          .motion-div,
-          svg,
-          svg path {
-            border: none !important;
-            border-top: none !important;
+          /* Remove line between hero and wave */
+          .relative.h-[60vh] {
             border-bottom: none !important;
-            outline: none !important;
-            box-shadow: none !important;
+            overflow: visible !important;
           }
 
-          /* Specifically target the wave and area below it */
+          /* Fix wave positioning to overlap perfectly */
+          .absolute.bottom-0.left-0.right-0 {
+            bottom: -1px !important;
+            transform: translateY(1px);
+          }
+
           .absolute.bottom-0.left-0.right-0 svg {
-            border-bottom: none !important;
-            margin-bottom: -2px !important;
-          }
-
-          /* Fix wave SVG connection issues */
-          svg {
             display: block !important;
             vertical-align: bottom !important;
+            margin-bottom: -2px !important;
+            position: relative;
+            z-index: 2;
           }
-          
-          /* Fix container joint between sections */
+
+          /* Ensure wave has proper dimensions */
+          .absolute.bottom-0.left-0.right-0 svg path {
+            fill: #ffffff !important;
+          }
+
+          /* Remove any potential gaps */
           .container.mx-auto.px-4.py-12 {
-            padding-top: 0 !important;
-            margin-top: -1px !important;
-          }
-          
-          /* Fix for wave-to-content transition */
-          .relative.h-\\[60vh\\].md\\:h-\\[70vh\\].min-h-\\[400px\\] {
-            border-bottom: 0 !important;
-            margin-bottom: -1px !important;
+            margin-top: -2px !important;
+            position: relative;
+            z-index: 1;
+            background: #ffffff;
           }
         }
         
@@ -848,6 +1068,16 @@ const GalleryPage: React.FC = () => {
         .absolute.bottom-0.left-0.right-0 svg {
           display: block;
           margin-bottom: -1px; /* Fix any gap between wave and content */
+        }
+        
+        /* Collection card styles */
+        .collection-card {
+          transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .collection-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
         }
       `}</style>
     </motion.section>

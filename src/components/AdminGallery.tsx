@@ -4,14 +4,17 @@ import { useToast } from '@/hooks/use-toast';
 import { 
   Upload, X, Image as ImageIcon, FilmIcon, Trash2, Edit2, 
   Check, Save, Plus, UploadCloud, CheckCircle2, Loader2, 
-  AlertCircle, FileUp, Files
+  AlertCircle, FileUp, Files, Folder, FolderOpen, Grid
 } from 'lucide-react';
 
 import { 
   saveGalleryItem, 
   getGalleryItemsRealtime, 
   updateGalleryItem, 
-  deleteGalleryItem 
+  deleteGalleryItem,
+  saveGalleryCollection,
+  deleteGalleryCollection,
+  getGalleryCollectionsRealtime
 } from '../utils/firebase';
 import { uploadToCloudinary, isVideo, optimizeCloudinaryUrl } from '../utils/cloudinaryUtils';
 import { cn } from '@/lib/utils';
@@ -42,6 +45,18 @@ const AdminGallery = () => {
   const [batchMode, setBatchMode] = useState(false);
   const [batchCategory, setBatchCategory] = useState('');
   
+  // Add state for collection
+  const [batchCollectionName, setBatchCollectionName] = useState('');
+  const [batchCollectionDescription, setBatchCollectionDescription] = useState('');
+  const [showTitleEditForm, setShowTitleEditForm] = useState(false);
+  const [batchItemTitles, setBatchItemTitles] = useState<Record<string, string>>({});
+  const [batchItemDescriptions, setBatchItemDescriptions] = useState<Record<string, string>>({});
+  
+  // Add state for collections management
+  const [collections, setCollections] = useState([]);
+  const [isLoadingCollections, setIsLoadingCollections] = useState(true);
+  const [showCollectionsSection, setShowCollectionsSection] = useState(false);
+  
   const fileInputRef = useRef(null);
   const batchFileInputRef = useRef(null);
   const { toast } = useToast();
@@ -49,8 +64,30 @@ const AdminGallery = () => {
   // Load gallery items with realtime updates
   useEffect(() => {
     const unsubscribe = getGalleryItemsRealtime(
-      (items) => {
+      (items, changedItem) => {
         setGalleryItems(items);
+        
+        // Notify on real-time changes
+        if (changedItem) {
+          const changeType = changedItem._changeType;
+          if (changeType === 'added') {
+            toast({
+              title: "Item Added",
+              description: "A new gallery item has been added successfully.",
+            });
+          } else if (changeType === 'modified') {
+            toast({
+              title: "Item Updated",
+              description: "A gallery item has been updated successfully.",
+            });
+          } else if (changeType === 'removed') {
+            toast({
+              title: "Item Removed",
+              description: "A gallery item has been removed successfully.",
+            });
+          }
+        }
+        
         // Extract unique categories
         const uniqueCategories = [...new Set(items.map(item => item.category).filter(Boolean))];
         setCategories(uniqueCategories);
@@ -64,6 +101,44 @@ const AdminGallery = () => {
           variant: "destructive"
         });
         setIsLoading(false);
+      }
+    );
+    
+    return () => unsubscribe();
+  }, [toast]);
+
+  // Load collections with realtime updates
+  useEffect(() => {
+    const unsubscribe = getGalleryCollectionsRealtime(
+      (collections, changedCollection) => {
+        setCollections(collections);
+        
+        // Notify on real-time changes
+        if (changedCollection) {
+          const changeType = changedCollection._changeType;
+          if (changeType === 'added') {
+            toast({
+              title: "Collection Added",
+              description: "A new collection has been created successfully.",
+            });
+          } else if (changeType === 'removed') {
+            toast({
+              title: "Collection Removed",
+              description: "A collection has been removed successfully.",
+            });
+          }
+        }
+        
+        setIsLoadingCollections(false);
+      },
+      (error) => {
+        console.error("Error fetching collections:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load collections. Please try again.",
+          variant: "destructive"
+        });
+        setIsLoadingCollections(false);
       }
     );
     
@@ -105,9 +180,10 @@ const AdminGallery = () => {
       clearInterval(progressInterval);
       setUploadProgress(100);
       
-      // Update form data with uploaded media
+      // Update form data with uploaded media - set empty title by default
       setFormData(prev => ({
         ...prev,
+        title: '', // Empty title by default
         mediaUrl: uploadResult.secure_url,
         mediaType: fileType,
         thumbnailUrl: fileType === 'video' ? uploadResult.secure_url.replace(/\.[^/.]+$/, '.jpg') : ''
@@ -136,22 +212,39 @@ const AdminGallery = () => {
     if (!files || files.length === 0) return;
     
     // Save files to state for preview
-    const fileArray = Array.from(files).map(file => ({
-      file,
-      id: Math.random().toString(36).substring(2, 9),
-      name: file.name,
-      size: file.size,
-      type: file.type.startsWith('video/') ? 'video' : 'image',
-      progress: 0,
-      status: 'pending', // pending, uploading, complete, error
-      error: null,
-      mediaUrl: '',
-      thumbnailUrl: '',
-    }));
+    const fileArray = Array.from(files).map(file => {
+      const id = Math.random().toString(36).substring(2, 9);
+      
+      // Initialize titles map
+      setBatchItemTitles(prev => ({
+        ...prev,
+        [id]: '' // Empty title to be filled by admin
+      }));
+      
+      return {
+        file,
+        id,
+        name: file.name,
+        size: file.size,
+        type: file.type.startsWith('video/') ? 'video' : 'image',
+        progress: 0,
+        status: 'pending', // pending, uploading, complete, error
+        error: null,
+        mediaUrl: '',
+        thumbnailUrl: '',
+      };
+    });
     
     setBatchFiles(fileArray);
     setBatchMode(true);
     setShowForm(false); // Close single upload form if open
+    
+    // Generate default collection name if empty
+    if (!batchCollectionName) {
+      const now = new Date();
+      const defaultName = `Collection ${now.toLocaleDateString()} ${now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}`;
+      setBatchCollectionName(defaultName);
+    }
     
     // Show notification
     toast({
@@ -245,44 +338,71 @@ const AdminGallery = () => {
     }
   };
 
-  // Save all batch uploads to Firebase
+  // Save all batch uploads to Firebase with collection support
   const saveBatchToGallery = async () => {
     if (batchUploads.length === 0) return;
     
-    let successCount = 0; // Changed from const to let so it can be incremented
+    // Validate collection name
+    if (!batchCollectionName.trim()) {
+      toast({
+        title: "Collection Name Required",
+        description: "Please enter a name for this collection of images.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    let successCount = 0;
     setIsUploading(true);
     
     try {
-      // Save each item to Firebase
+      // First create the collection
+      const collectionId = await saveGalleryCollection({
+        name: batchCollectionName,
+        description: batchCollectionDescription,
+        category: batchCategory,
+        thumbnailUrl: batchUploads[0].mediaUrl, // Use first image as thumbnail
+        itemCount: batchUploads.length,
+        createdAt: new Date()
+      });
+      
+      // Save each item to Firebase with collection reference
       for (const item of batchUploads) {
         const galleryItem = {
-          title: item.name.split('.')[0] || 'Untitled',  // Use filename as title
-          description: '',
+          title: batchItemTitles[item.id] || '',  // Use empty string as default instead of 'Untitled'
+          description: batchItemDescriptions[item.id] || '',
           category: batchCategory,
           mediaUrl: item.mediaUrl,
           thumbnailUrl: item.thumbnailUrl,
-          mediaType: item.type
+          mediaType: item.type,
+          collectionId, // Link to the collection
+          collectionName: batchCollectionName
         };
         
         await saveGalleryItem(galleryItem);
-        successCount++; // Now we can increment this
+        successCount++;
       }
       
       toast({
-        title: "Batch Save Complete",
-        description: `${successCount} items added to the gallery successfully.`,
+        title: "Collection Created",
+        description: `${successCount} items added to "${batchCollectionName}" collection.`,
       });
       
       // Reset batch mode
       setBatchFiles([]);
       setBatchUploads([]);
       setBatchMode(false);
+      setShowTitleEditForm(false);
       setBatchCategory('');
+      setBatchCollectionName('');
+      setBatchCollectionDescription('');
+      setBatchItemTitles({});
+      setBatchItemDescriptions({});
     } catch (error) {
       console.error("Error saving batch to gallery:", error);
       toast({
         title: "Error",
-        description: "Failed to save some or all items to gallery.",
+        description: "Failed to save some or all items to collection.",
         variant: "destructive"
       });
     } finally {
@@ -290,23 +410,93 @@ const AdminGallery = () => {
     }
   };
 
-  // Remove item from batch
-  const removeFromBatch = (id) => {
-    setBatchFiles(prev => prev.filter(f => f.id !== id));
-    setBatchUploads(prev => prev.filter(f => f.id !== id));
-    
-    // If batch is empty, exit batch mode
-    if (batchFiles.length <= 1) {
-      setBatchMode(false);
-    }
-  };
-
-  // Clear entire batch
-  const clearBatch = () => {
-    setBatchFiles([]);
-    setBatchUploads([]);
-    setBatchMode(false);
-    setBatchCategory('');
+  // Modal to edit titles after upload
+  const BatchTitleEditForm = () => {
+    return (
+      <div className="bg-navy-800 border border-navy-700 rounded-lg my-6 p-6">
+        <h4 className="text-lg font-medium mb-4 flex items-center">
+          <Edit2 className="mr-2 text-gold-400" size={18} />
+          <span>Set Custom Titles (Optional)</span>
+        </h4>
+        
+        <p className="text-sm text-navy-300 mb-6">
+          You may provide titles for your images and videos. Leaving the title field empty will keep the media untitled in the gallery.
+        </p>
+        
+        <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+          {batchUploads.map((item, index) => (
+            <div key={item.id} className="flex gap-4 p-4 bg-navy-700/50 rounded-lg items-start">
+              <div className="w-20 h-20 flex-shrink-0 bg-navy-800 rounded overflow-hidden">
+                {item.mediaUrl && (item.type === 'image' ? (
+                  <img 
+                    src={optimizeCloudinaryUrl(item.mediaUrl, 'image', { thumbnail: true })}
+                    alt={batchItemTitles[item.id] || `Item ${index + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="h-full flex items-center justify-center">
+                    <FilmIcon className="text-navy-400" size={30} />
+                  </div>
+                ))}
+              </div>
+              
+              <div className="flex-1">
+                <div className="mb-3">
+                  <label htmlFor={`title-${item.id}`} className="block text-xs text-navy-300 mb-1">
+                    Title *
+                  </label>
+                  <input
+                    id={`title-${item.id}`}
+                    value={batchItemTitles[item.id] || ''}
+                    onChange={(e) => setBatchItemTitles(prev => ({
+                      ...prev,
+                      [item.id]: e.target.value
+                    }))}
+                    placeholder={`Title for item ${index + 1}`}
+                    className="w-full p-2 bg-navy-600/50 border border-navy-500 rounded text-white"
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor={`desc-${item.id}`} className="block text-xs text-navy-300 mb-1">
+                    Description (Optional)
+                  </label>
+                  <textarea
+                    id={`desc-${item.id}`}
+                    value={batchItemDescriptions[item.id] || ''}
+                    onChange={(e) => setBatchItemDescriptions(prev => ({
+                      ...prev,
+                      [item.id]: e.target.value
+                    }))}
+                    placeholder="Optional description"
+                    rows={2}
+                    className="w-full p-2 bg-navy-600/50 border border-navy-500 rounded text-white text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="flex justify-between mt-6 pt-4 border-t border-navy-700">
+          <button
+            onClick={() => setShowTitleEditForm(false)}
+            className="px-4 py-2 border border-navy-600 text-white rounded-md hover:bg-navy-700 transition-colors flex items-center gap-2"
+          >
+            <X size={16} />
+            <span>Cancel</span>
+          </button>
+          
+          <button
+            onClick={saveBatchToGallery}
+            className="px-6 py-2 bg-gradient-to-r from-gold-600 to-gold-500 text-navy-900 hover:from-gold-500 hover:to-gold-400 rounded-md flex items-center gap-2"
+          >
+            <Check size={16} />
+            <span>Confirm & Save Collection</span>
+          </button>
+        </div>
+      </div>
+    );
   };
 
   const handleDragOver = (e) => {
@@ -430,13 +620,22 @@ const AdminGallery = () => {
   const handleDelete = async (id) => {
     if (window.confirm("Are you sure you want to delete this gallery item?")) {
       try {
+        // Show loading state
+        const itemToDelete = galleryItems.find(item => item.id === id);
+        const itemTitle = itemToDelete?.title || "Item";
+        
+        // Set optimistic UI update
+        setGalleryItems(prev => prev.filter(item => item.id !== id));
+        
         await deleteGalleryItem(id);
-        toast({
-          title: "Item Deleted",
-          description: "Gallery item has been successfully deleted.",
-        });
+        
+        // Toast notification will be triggered by the real-time listener
       } catch (error) {
         console.error("Error deleting gallery item:", error);
+        
+        // Restore the item in the UI if deletion fails
+        setGalleryItems(prev => [...prev, galleryItems.find(item => item.id === id)].filter(Boolean));
+        
         toast({
           title: "Error",
           description: "Failed to delete gallery item. Please try again.",
@@ -444,6 +643,58 @@ const AdminGallery = () => {
         });
       }
     }
+  };
+
+  // Delete a collection and all its items with improved feedback
+  const handleDeleteCollection = async (collectionId, collectionName) => {
+    if (window.confirm(`Are you sure you want to delete the collection "${collectionName}" and ALL its contents? This action cannot be undone.`)) {
+      try {
+        // Show deletion in progress
+        toast({
+          title: "Deleting Collection...",
+          description: "Please wait while the collection and its items are being deleted."
+        });
+        
+        // Set optimistic UI update
+        setCollections(prev => prev.filter(col => col.id !== collectionId));
+        
+        const result = await deleteGalleryCollection(collectionId);
+        
+        // Toast notification will be triggered by the real-time listener
+      } catch (error) {
+        console.error("Error deleting collection:", error);
+        
+        // Restore the collection in the UI if deletion fails
+        setCollections(prev => [...prev, collections.find(col => col.id === collectionId)].filter(Boolean));
+        
+        toast({
+          title: "Error",
+          description: "Failed to delete the collection. Please try again.",
+          variant: "destructive"
+        });
+      }
+    }
+  };
+
+  // Remove item from batch
+  const removeFromBatch = (id: string) => {
+    setBatchFiles(prev => prev.filter(f => f.id !== id));
+    setBatchUploads(prev => prev.filter(f => f.id !== id));
+    
+    // If batch is empty, exit batch mode
+    if (batchFiles.length <= 1) {
+      setBatchMode(false);
+    }
+  };
+
+  // Clear entire batch
+  const clearBatch = () => {
+    setBatchFiles([]);
+    setBatchUploads([]);
+    setBatchMode(false);
+    setBatchCategory('');
+    setBatchCollectionName('');
+    setBatchCollectionDescription('');
   };
 
   // Helper function to format file size
@@ -459,49 +710,158 @@ const AdminGallery = () => {
         <h2 className="text-xl font-playfair text-white">Gallery Management</h2>
         
         <div className="flex gap-2">
-          {!batchMode && (
-            <button
-              onClick={() => {
-                resetForm();
-                setShowForm(prev => !prev);
-                setBatchMode(false);
-              }}
-              className={cn(
-                "px-4 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition-all",
-                showForm 
-                  ? "bg-navy-700 text-white hover:bg-navy-600" 
-                  : "bg-gold-500 text-navy-900 hover:bg-gold-400"
-              )}
-            >
-              {showForm ? (
-                <>
-                  <X size={16} />
-                  <span>Cancel</span>
-                </>
-              ) : (
-                <>
-                  <Plus size={16} />
-                  <span>Add Single Item</span>
-                </>
-              )}
-            </button>
-          )}
+          {/* Always show these navigation buttons regardless of mode */}
+          <button
+            onClick={() => {
+              resetForm();
+              setShowForm(!showForm);
+              setShowCollectionsSection(false);
+              setBatchMode(false);
+            }}
+            className={cn(
+              "px-4 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition-all",
+              showForm 
+                ? "bg-navy-700 text-white hover:bg-navy-600" 
+                : "bg-gold-500 text-navy-900 hover:bg-gold-400"
+            )}
+          >
+            {showForm ? (
+              <>
+                <X size={16} />
+                <span>Cancel</span>
+              </>
+            ) : (
+              <>
+                <Plus size={16} />
+                <span>Add Single Item</span>
+              </>
+            )}
+          </button>
           
-          {!showForm && (
-            <button
-              onClick={() => {
-                setBatchMode(true);
-                setShowForm(false);
+          <button
+            onClick={() => {
+              setShowCollectionsSection(!showCollectionsSection);
+              setShowForm(false);
+              setBatchMode(false);
+            }}
+            className={cn(
+              "px-4 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition-all",
+              showCollectionsSection
+                ? "bg-navy-700 text-white hover:bg-navy-600" 
+                : "bg-purple-600 text-white hover:bg-purple-500"
+            )}
+          >
+            <Folder size={16} />
+            <span>{showCollectionsSection ? "Hide Collections" : "Manage Collections"}</span>
+          </button>
+          
+          <button
+            onClick={() => {
+              setBatchMode(!batchMode);
+              setShowForm(false);
+              setShowCollectionsSection(false);
+              if (!batchMode) {
                 openBatchFileDialog();
-              }}
-              className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-500 flex items-center gap-2 text-sm font-medium transition-all"
-            >
-              <Files size={16} />
-              <span>Batch Upload</span>
-            </button>
-          )}
+              }
+            }}
+            className={cn(
+              "px-4 py-2 rounded-md flex items-center gap-2 text-sm font-medium transition-all",
+              batchMode
+                ? "bg-navy-700 text-white hover:bg-navy-600"
+                : "bg-blue-600 text-white hover:bg-blue-500" 
+            )}
+          >
+            <Files size={16} />
+            <span>{batchMode ? "Cancel Batch" : "Batch Upload"}</span>
+          </button>
         </div>
       </div>
+
+      {/* Collections Management Section */}
+      {showCollectionsSection && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-navy-800/80 backdrop-blur-sm border border-navy-700/50 rounded-lg p-6 mb-8"
+        >
+          <h3 className="text-lg font-medium mb-5 text-white flex items-center">
+            <Folder size={18} className="mr-2 text-purple-400" />
+            Manage Collections
+          </h3>
+          
+          {isLoadingCollections ? (
+            <div className="flex justify-center items-center p-10">
+              <div className="w-10 h-10 border-4 border-navy-600 border-t-purple-400 rounded-full animate-spin"></div>
+            </div>
+          ) : collections.length === 0 ? (
+            <div className="text-center p-10 text-navy-400">
+              <Folder size={48} className="mx-auto mb-4 opacity-50" />
+              <p>No collections found. Create a collection by using Batch Upload.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {collections.map((collection) => (
+                <div 
+                  key={collection.id}
+                  className="bg-navy-700 rounded-lg overflow-hidden border border-navy-600 hover:border-purple-500/30 transition-colors"
+                >
+                  <div className="aspect-video relative bg-navy-900">
+                    {collection.thumbnailUrl ? (
+                      <img 
+                        src={optimizeCloudinaryUrl(collection.thumbnailUrl, 'image', { thumbnail: true })} 
+                        alt={collection.name || 'Collection'} 
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <Folder size={40} className="text-navy-400" />
+                      </div>
+                    )}
+                    
+                    {/* Category badge */}
+                    {collection.category && (
+                      <div className="absolute top-2 right-2 px-2 py-1 bg-purple-500/80 backdrop-blur-sm rounded text-xs text-white">
+                        {collection.category}
+                      </div>
+                    )}
+                    
+                    {/* Item count */}
+                    <div className="absolute bottom-2 right-2 px-2 py-1 bg-navy-800/80 backdrop-blur-sm rounded text-xs text-white">
+                      {collection.itemCount || 0} items
+                    </div>
+                  </div>
+                  
+                  <div className="p-4">
+                    <h4 className="font-medium text-white mb-1">
+                      {collection.name || ''}
+                    </h4>
+                    
+                    {collection.description && (
+                      <p className="text-navy-300 text-sm line-clamp-2 mb-3">
+                        {collection.description}
+                      </p>
+                    )}
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs text-navy-400">
+                        {new Date(collection.timestamp?.toDate?.() || collection.createdAt || Date.now()).toLocaleDateString()}
+                      </span>
+                      
+                      <button
+                        onClick={() => handleDeleteCollection(collection.id, collection.name)}
+                        className="p-2 bg-red-900/50 hover:bg-red-900 rounded text-white transition-colors"
+                        title="Delete Collection"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </motion.div>
+      )}
 
       {/* Batch Upload Section */}
       {batchMode && (
@@ -511,9 +871,64 @@ const AdminGallery = () => {
           className="bg-navy-800/80 backdrop-blur-sm border border-navy-700/50 rounded-lg p-6 mb-8"
         >
           <h3 className="text-lg font-medium mb-5 text-white flex items-center">
-            <Files size={18} className="mr-2 text-blue-400" />
-            Batch Upload
+            <FolderOpen size={18} className="mr-2 text-blue-400" />
+            Create Image Collection
           </h3>
+          
+          {/* Collection details section */}
+          <div className="mb-6 bg-navy-700/30 rounded-lg p-4 border border-navy-600/50">
+            <h4 className="font-medium text-sm text-white mb-3 flex items-center">
+              <Folder size={14} className="mr-1.5 text-gold-400" />
+              Collection Details
+            </h4>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div>
+                <label htmlFor="collectionName" className="block text-xs text-navy-300 mb-1">
+                  Collection Name *
+                </label>
+                <input
+                  id="collectionName"
+                  value={batchCollectionName}
+                  onChange={(e) => setBatchCollectionName(e.target.value)}
+                  placeholder="Enter a name for this collection"
+                  className="w-full p-2.5 bg-navy-600/50 border border-navy-600 rounded text-white focus:outline-none focus:ring-1 focus:ring-gold-500/30 focus:border-gold-500"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="batchCategory" className="block text-xs text-navy-300 mb-1">
+                  Category (Optional)
+                </label>
+                <select
+                  id="batchCategory"
+                  value={batchCategory}
+                  onChange={(e) => setBatchCategory(e.target.value)}
+                  className="w-full p-2.5 bg-navy-600/50 border border-navy-600 rounded text-white focus:outline-none focus:ring-1 focus:ring-gold-500/30 focus:border-gold-500"
+                >
+                  <option value="">No Category</option>
+                  {categories.map((cat, idx) => (
+                    <option key={idx} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            
+            <div className="mb-2">
+              <label htmlFor="collectionDescription" className="block text-xs text-navy-300 mb-1">
+                Collection Description (Optional)
+              </label>
+              <textarea
+                id="collectionDescription"
+                value={batchCollectionDescription}
+                onChange={(e) => setBatchCollectionDescription(e.target.value)}
+                placeholder="Enter a brief description of this collection"
+                rows={3}
+                className="w-full p-2.5 bg-navy-600/50 border border-navy-600 rounded text-white focus:outline-none focus:ring-1 focus:ring-gold-500/30 focus:border-gold-500"
+              />
+            </div>
+          </div>
           
           {batchFiles.length === 0 ? (
             <div
@@ -535,10 +950,10 @@ const AdminGallery = () => {
                 />
                 
                 <p className="mb-2 text-sm text-navy-300">
-                  <span className="font-medium">Click to upload multiple files</span> or drag and drop
+                  <span className="font-medium">Select multiple files</span> or drag and drop
                 </p>
                 <p className="text-xs text-navy-400">
-                  Select multiple images or videos at once
+                  Images and videos will be grouped into a collection
                 </p>
                 
                 <button
@@ -553,9 +968,13 @@ const AdminGallery = () => {
             </div>
           ) : (
             <>
+              {/* Display selected files section */}
               <div className="bg-navy-700/50 rounded-lg p-4 mb-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h4 className="text-white font-medium">{batchFiles.length} Files Selected</h4>
+                  <h4 className="text-white font-medium flex items-center gap-2">
+                    <Grid size={14} />
+                    <span>{batchFiles.length} Files Selected</span>
+                  </h4>
                   
                   <div className="flex gap-2">
                     <button
@@ -575,27 +994,6 @@ const AdminGallery = () => {
                       <X size={14} />
                       <span>Clear All</span>
                     </button>
-                  </div>
-                </div>
-                
-                {/* Batch Category Selection */}
-                <div className="mb-4">
-                  <label htmlFor="batchCategory" className="block text-sm font-medium text-navy-300 mb-1">
-                    Category for All Items (Optional)
-                  </label>
-                  <div className="relative">
-                    <select
-                      id="batchCategory"
-                      value={batchCategory}
-                      onChange={(e) => setBatchCategory(e.target.value)}
-                      className="w-full p-2.5 bg-navy-700/50 border border-navy-600 rounded text-white focus:outline-none focus:ring-1 focus:ring-gold-500/30 focus:border-gold-500"
-                      disabled={isBatchUploading}
-                    >
-                      <option value="">No Category</option>
-                      {categories.map((cat, idx) => (
-                        <option key={idx} value={cat}>{cat}</option>
-                      ))}
-                    </select>
                   </div>
                 </div>
                 
@@ -671,6 +1069,11 @@ const AdminGallery = () => {
                 </div>
               </div>
               
+              {/* Title editing form */}
+              {showTitleEditForm && batchUploads.length > 0 && (
+                <BatchTitleEditForm />
+              )}
+              
               {/* Batch Upload/Save Controls */}
               <div className="flex justify-end gap-3">
                 <button
@@ -678,6 +1081,9 @@ const AdminGallery = () => {
                     setBatchMode(false);
                     setBatchFiles([]);
                     setBatchUploads([]);
+                    setShowTitleEditForm(false);
+                    setBatchCollectionName('');
+                    setBatchCollectionDescription('');
                   }}
                   className="px-4 py-2 border border-navy-600 text-white rounded-md hover:bg-navy-700 transition-colors"
                   disabled={isBatchUploading}
@@ -705,7 +1111,17 @@ const AdminGallery = () => {
                   </button>
                 ) : (
                   <button
-                    onClick={saveBatchToGallery}
+                    onClick={() => {
+                      if (!batchCollectionName.trim()) {
+                        toast({
+                          title: "Collection Name Required",
+                          description: "Please provide a name for this collection.",
+                          variant: "destructive"
+                        });
+                        return;
+                      }
+                      setShowTitleEditForm(true);
+                    }}
                     className="px-6 py-2 bg-gradient-to-r from-gold-600 to-gold-500 text-navy-900 hover:from-gold-500 hover:to-gold-400 rounded-md transition-colors flex items-center gap-2"
                     disabled={isUploading}
                   >
@@ -716,8 +1132,8 @@ const AdminGallery = () => {
                       </>
                     ) : (
                       <>
-                        <Save size={16} />
-                        <span>Save All to Gallery</span>
+                        <Edit2 size={16} />
+                        <span>Set Titles & Save Collection</span>
                       </>
                     )}
                   </button>
@@ -1066,13 +1482,23 @@ const AdminGallery = () => {
                 {/* Info section */}
                 <div className="p-4">
                   <h4 className="text-white font-medium mb-1 truncate">
-                    {item.title || 'Untitled Gallery Item'}
+                    {item.title || ''}
                   </h4>
                   
                   {item.description && (
                     <p className="text-navy-300 text-sm line-clamp-2 mb-3">
                       {item.description}
                     </p>
+                  )}
+                  
+                  {/* Show collection badge if item belongs to a collection */}
+                  {item.collectionName && (
+                    <div className="mb-3">
+                      <span className="px-2 py-1 bg-purple-900/50 text-purple-200 rounded-full text-xs flex items-center w-fit">
+                        <Folder size={10} className="mr-1" />
+                        {item.collectionName}
+                      </span>
+                    </div>
                   )}
                   
                   <div className="flex justify-between items-center">

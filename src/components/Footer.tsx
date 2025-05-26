@@ -124,11 +124,21 @@ const Footer: React.FC = () => {
             <address className="not-italic text-gray-100 space-y-3">
               <div className="flex items-start">
                 <Mail size={18} className="mr-3 mt-1 text-gold-300/80" />
-                <p>revathidubaindia@gmail.com</p>
+                <a 
+                  href="mailto:revathidubaindia@gmail.com"
+                  className="hover:text-gold-300 transition-colors"
+                >
+                  revathidubaindia@gmail.com
+                </a>
               </div>
               <div className="flex items-start">
                 <Phone size={18} className="mr-3 mt-1 text-gold-300/80" />
-                <p>+91 8099794356</p>
+                <a 
+                  href="tel:+918099794356"
+                  className="hover:text-gold-300 transition-colors"
+                >
+                  +91 8099794356
+                </a>
               </div>
               <div className="flex items-start">
                 <MapPin size={18} className="mr-3 mt-1 text-gold-300/80" />

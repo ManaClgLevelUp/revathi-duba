@@ -3,7 +3,7 @@ import { getAuth, signInWithEmailAndPassword, signOut } from "firebase/auth";
 import { 
   addDoc, collection, orderBy, onSnapshot, query, 
   getDoc, getDocs, updateDoc, doc, deleteDoc, serverTimestamp,
-  getFirestore
+  getFirestore, where
 } from 'firebase/firestore';
 
 // Firebase configuration
@@ -195,6 +195,30 @@ export const getGalleryItems = async () => {
   }
 };
 
+export const updateGalleryItem = async (id, data) => {
+  try {
+    const galleryRef = doc(db, "galleryItems", id);
+    await updateDoc(galleryRef, {
+      ...data,
+      updatedAt: new Date()
+    });
+    return true;
+  } catch (error) {
+    console.error("Error updating gallery item:", error);
+    throw error;
+  }
+};
+
+export const deleteGalleryItem = async (id) => {
+  try {
+    await deleteDoc(doc(db, "galleryItems", id));
+    return true;
+  } catch (error) {
+    console.error("Error deleting gallery item:", error);
+    throw error;
+  }
+};
+
 export const getGalleryItemsRealtime = (onUpdate, onError) => {
   try {
     const galleryRef = collection(db, "galleryItems");
@@ -206,6 +230,25 @@ export const getGalleryItemsRealtime = (onUpdate, onError) => {
           id: doc.id,
           ...doc.data()
         }));
+        
+        // Check for changes
+        snapshot.docChanges().forEach((change) => {
+          const docData = change.doc.data();
+          const changeData = {
+            id: change.doc.id,
+            _changeType: change.type, // added, modified, removed
+            ...docData
+          };
+          
+          // Only notify for recent changes - safely check for timestamp
+          const docTimestamp = docData?.timestamp?.toDate?.() || new Date();
+          const isRecent = (new Date().getTime() - docTimestamp.getTime()) < 5000; // 5 seconds
+          
+          if (isRecent) {
+            onUpdate(items, changeData);
+          }
+        });
+        
         onUpdate(items);
       },
       (error) => {
@@ -222,23 +265,166 @@ export const getGalleryItemsRealtime = (onUpdate, onError) => {
   }
 };
 
-export const updateGalleryItem = async (id, data) => {
+/**
+ * Collection Management Functions
+ */
+export const saveGalleryCollection = async (collectionData) => {
   try {
-    const galleryRef = doc(db, "galleryItems", id);
-    await updateDoc(galleryRef, data);
-    return true;
+    const docRef = await addDoc(collection(db, "galleryCollections"), {
+      ...collectionData,
+      timestamp: serverTimestamp(),
+    });
+    return docRef.id;
   } catch (error) {
-    console.error("Error updating gallery item:", error);
+    console.error("Error saving collection:", error);
     throw error;
   }
 };
 
-export const deleteGalleryItem = async (id) => {
+export const getGalleryCollections = async () => {
   try {
-    await deleteDoc(doc(db, "galleryItems", id));
-    return true;
+    const collectionRef = collection(db, "galleryCollections");
+    const q = query(collectionRef, orderBy("timestamp", "desc"));
+    
+    const snapshot = await getDocs(q);
+    const collections = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    return collections;
   } catch (error) {
-    console.error("Error deleting gallery item:", error);
+    console.error("Error in getGalleryCollections:", error);
+    throw error;
+  }
+};
+
+export const getGalleryCollectionsRealtime = (onUpdate, onError) => {
+  try {
+    const collectionRef = collection(db, "galleryCollections");
+    const q = query(collectionRef, orderBy("timestamp", "desc"));
+    
+    const unsubscribe = onSnapshot(q, 
+      (snapshot) => {
+        const collections = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+        
+        // Check for changes
+        snapshot.docChanges().forEach((change) => {
+          const docData = change.doc.data();
+          const changeData = {
+            id: change.doc.id,
+            _changeType: change.type, // added, modified, removed
+            ...docData
+          };
+          
+          // Only notify for recent changes - safely check for timestamp
+          const docTimestamp = docData?.timestamp?.toDate?.() || new Date();
+          const isRecent = (new Date().getTime() - docTimestamp.getTime()) < 5000; // 5 seconds
+          
+          if (isRecent) {
+            onUpdate(collections, changeData);
+          }
+        });
+        
+        onUpdate(collections);
+      },
+      (error) => {
+        console.error("Error getting gallery collections in realtime:", error);
+        if (onError) onError(error);
+      }
+    );
+    
+    return unsubscribe;
+  } catch (error) {
+    console.error("Error in getGalleryCollectionsRealtime:", error);
+    if (onError) onError(error);
+    return () => {};
+  }
+};
+
+/**
+ * Delete a gallery collection and all its items
+ */
+export const deleteGalleryCollection = async (collectionId) => {
+  try {
+    if (!collectionId) {
+      throw new Error("Collection ID is required for deletion");
+    }
+    
+    // First, fetch all items in this collection
+    const itemsRef = collection(db, "galleryItems");
+    const q = query(
+      itemsRef, 
+      where("collectionId", "==", collectionId)
+    );
+    
+    const snapshot = await getDocs(q);
+    
+    // Delete all items in the collection
+    const itemDeletePromises = snapshot.docs.map(doc => 
+      deleteDoc(doc.ref)
+    );
+    
+    // Wait for all item deletions to complete
+    await Promise.all(itemDeletePromises);
+    
+    // Then delete the collection itself
+    const collectionRef = doc(db, "galleryCollections", collectionId);
+    await deleteDoc(collectionRef);
+    
+    return {
+      success: true,
+      itemsDeleted: snapshot.docs.length
+    };
+  } catch (error) {
+    console.error("Error deleting gallery collection:", error);
+    throw error;
+  }
+};
+
+export const getCollectionItems = async (collectionId) => {
+  try {
+    if (!collectionId) {
+      throw new Error("Collection ID is required");
+    }
+    
+    const itemsRef = collection(db, "galleryItems");
+    
+    // Use only the where clause without orderBy to avoid composite index requirements
+    const q = query(
+      itemsRef, 
+      where("collectionId", "==", collectionId)
+      // Removed orderBy to fix the index error
+    );
+    
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      console.log(`No items found for collection: ${collectionId}`);
+    }
+    
+    // Sort the results in memory after fetching them
+    const items = snapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        // Add explicit timestamp handling for TypeScript
+        timestamp: data.timestamp || null
+      };
+    });
+    
+    // Sort by timestamp in descending order (newest first)
+    items.sort((a, b) => {
+      const timeA = a.timestamp?.toDate?.() || 0;
+      const timeB = b.timestamp?.toDate?.() || 0;
+      return timeB - timeA;
+    });
+    
+    return items;
+  } catch (error) {
+    console.error(`Error in getCollectionItems for collectionId ${collectionId}:`, error);
     throw error;
   }
 };
