@@ -46,7 +46,7 @@ const Education = () => {
   
   const educationHistory = [
     {
-      degree: 'Ph.D.: Electrical and Computer Engineering',
+      degree: 'Ph.D.: Computer Engineering',
       institution: 'Lincoln University College',
       location: 'Malaysia',
       years: '2023',

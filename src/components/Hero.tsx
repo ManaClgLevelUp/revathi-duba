@@ -234,7 +234,7 @@ const Hero = () => {
             className="text-navy-600 text-sm sm:text-base max-w-lg leading-relaxed mb-5 sm:mb-6 transform-gpu animate-reveal-text opacity-0"
             style={{ animationDelay: '0.5s', animationFillMode: 'forwards' }}
           >
-            <span className="text-navy-800 font-medium">Holds a Ph.D. in Electrical and Computer Engineering</span> with research expertise in AI applications for power systems. Principal, Director of Academics, and expert in <span className="text-navy-800 font-medium">Artificial Intelligence</span>, 
+            <span className="text-navy-800 font-medium">Holds a Ph.D. in Computer Engineering</span> with research expertise in AI applications for power systems. Principal, Director of Academics, and expert in <span className="text-navy-800 font-medium">Artificial Intelligence</span>, 
             <span className="text-navy-800 font-medium"> Machine Learning</span>, and <span className="text-navy-800 font-medium"> Data Science</span>.
           </p>
           

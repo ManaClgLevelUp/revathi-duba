@@ -25,7 +25,7 @@ const Research = () => {
       link: "#",
       highlighted: true,
       type: "Article",
-      specialization: "Electrical and Computer Engineering"
+      specialization: "Computer Engineering"
     },
     {
       id: 2,
@@ -37,7 +37,7 @@ const Research = () => {
       category: "journals",
       link: "#",
       type: "Article",
-      specialization: "Electrical and Computer Engineering"
+      specialization: "Computer Engineering"
     },
     {
       id: 3,
@@ -47,7 +47,7 @@ const Research = () => {
       category: "conferences",
       link: "#",
       type: "Conference",
-      specialization: "Electrical and Computer Engineering"
+      specialization: "Computer Engineering"
     },
     {
       id: 4,
@@ -57,7 +57,7 @@ const Research = () => {
       category: "conferences",
       link: "#",
       type: "Conference",
-      specialization: "Electrical and Computer Engineering"
+      specialization: "Computer Engineering"
     },
     {
       id: 5,
@@ -67,7 +67,7 @@ const Research = () => {
       category: "conferences",
       link: "#",
       type: "Conference",
-      specialization: "Electrical and Computer Engineering"
+      specialization: "Computer Engineering"
     },
     {
       id: 6,
@@ -80,7 +80,7 @@ const Research = () => {
       category: "journals",
       link: "#",
       type: "Article",
-      specialization: "Electrical and Computer Engineering"
+      specialization: "Computer Engineering"
     },
     {
       id: 7,
@@ -91,7 +91,7 @@ const Research = () => {
       category: "journals",
       link: "#",
       type: "Article",
-      specialization: "Electrical and Computer Engineering"
+      specialization: "Computer Engineering"
     },
     {
       id: 8,
@@ -101,7 +101,7 @@ const Research = () => {
       category: "journals",
       link: "#",
       type: "Article",
-      specialization: "Electrical and Computer Engineering"
+      specialization: "Computer Engineering"
     },
     {
       id: 9,
@@ -112,7 +112,7 @@ const Research = () => {
       category: "journals",
       link: "#",
       type: "Article",
-      specialization: "Electrical and Computer Engineering"
+      specialization: "Computer Engineering"
     },
     {
       id: 10,
@@ -123,7 +123,7 @@ const Research = () => {
       category: "conferences",
       link: "#",
       type: "Conference",
-      specialization: "Electrical and Computer Engineering"
+      specialization: "Computer Engineering"
     },
     {
       id: 11,
@@ -133,7 +133,7 @@ const Research = () => {
       category: "journals",
       link: "#",
       type: "Article",
-      specialization: "Electrical and Computer Engineering"
+      specialization: "Computer Engineering"
     },
     {
       id: 12,
@@ -143,7 +143,7 @@ const Research = () => {
       category: "journals",
       link: "#",
       type: "Article",
-      specialization: "Electrical and Computer Engineering"
+      specialization: "Computer Engineering"
     },
     {
       id: 13,
@@ -153,7 +153,7 @@ const Research = () => {
       category: "journals",
       link: "#",
       type: "Article",
-      specialization: "Electrical and Computer Engineering"
+      specialization: "Computer Engineering"
     },
     {
       id: 14,
@@ -163,7 +163,7 @@ const Research = () => {
       category: "journals",
       link: "#",
       type: "Article",
-      specialization: "Electrical and Computer Engineering"
+      specialization: "Computer Engineering"
     },
     {
       id: 15,
@@ -173,7 +173,7 @@ const Research = () => {
       category: "journals",
       link: "#",
       type: "Article",
-      specialization: "Electrical and Computer Engineering"
+      specialization: "Computer Engineering"
     }
   ];
   
@@ -408,7 +408,7 @@ const Research = () => {
           
           <div className="text-navy-500 text-sm">
             {filteredPublications.length > 0 ? (
-              <span>Research focus: <span className="text-navy-900 font-medium">Electrical and Computer Engineering</span></span>
+              <span>Research focus: <span className="text-navy-900 font-medium">Computer Engineering</span></span>
             ) : (
               <span>No publications match your filter criteria</span>
             )}
@@ -452,7 +452,7 @@ const Research = () => {
                       </span>
                     )}
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      Electrical and Computer Engineering
+                      Computer Engineering
                     </span>
                   </div>
                   

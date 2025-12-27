@@ -167,32 +167,6 @@ const Footer: React.FC = () => {
             <div className="w-8 h-1 bg-gradient-to-r from-transparent via-gold-300 to-transparent"></div>
           </div>
           <p>&copy; {currentYear} Dr. Revathi Duba. All rights reserved.</p>
-          <p className="mt-2 text-sm">
-            Designed & Developed By{" "}
-            <span className="sm:inline hidden">
-              <a 
-                href="https://thedreamteamservices.com/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-gold-300 hover:text-gold-200 transition-colors font-medium"
-              >
-                {<span className="text-gold-300">DREAM TEAM SERVICES</span>}
-              </a>
-            </span>
-            {/* Mobile attribution with reduced spacing */}
-            <span className="sm:hidden inline">
-              <span className="inline-block mt-0.5"> {/* Smaller gap instead of <br /> */}
-                <a 
-                  href="https://thedreamteamservices.com/" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-gold-300 hover:text-gold-200 transition-colors font-medium"
-                >
-                  {<span className="text-gold-300">DREAM TEAM SERVICES</span>}
-                </a>
-              </span>
-            </span>
-          </p>
         </div>
       </div>
 
